@@ -37,25 +37,31 @@
             flex-direction: column;
         }
         .score-label {
-            font-size: 12px;
+            font-size: 11px;
             color: #94a3b8;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
         .score-value {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: bold;
             color: #38bdf8;
             text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
         }
-        .combo-badge {
-            font-size: 14px;
+        .coin-value {
+            font-size: 24px;
             font-weight: bold;
             color: #f59e0b;
+            text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+        }
+        .combo-badge {
+            font-size: 13px;
+            font-weight: bold;
+            color: #e11d48;
             height: 20px;
             transition: opacity 0.3s;
             opacity: 0;
-            text-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+            text-shadow: 0 0 8px rgba(225, 29, 72, 0.6);
         }
         .game-board-wrapper {
             position: relative;
@@ -74,37 +80,45 @@
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(0,0,0,0.5);
             aspect-ratio: 1 / 1;
             width: 100%;
+            position: relative;
         }
         .cell {
             background-color: #334155;
             border-radius: 4px;
-            transition: background-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+            transition: background-color 0.1s ease, transform 0.1s ease;
             position: relative;
         }
         .cell.filled {
             box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.8), 0 0 12px currentColor;
         }
         .cell.preview {
-            opacity: 0.6;
-            transform: scale(0.95);
-            box-shadow: inset 0 0 5px #fff;
+            opacity: 0.5;
+            transform: scale(0.92);
+            box-shadow: inset 0 0 6px #fff;
         }
-        .pieces-container {
+        .bottom-panel {
             width: 100%;
             max-width: 420px;
-            height: 140px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
             background-color: #1e293b;
             border-top-left-radius: 20px;
             border-top-right-radius: 20px;
-            padding: 10px;
+            padding: 10px 10px 15px 10px;
             box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .pieces-container {
+            width: 100%;
+            height: 110px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
         }
         .piece-holder {
-            width: 100px;
-            height: 100px;
+            width: 90px;
+            height: 90px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -121,12 +135,39 @@
             position: fixed;
             pointer-events: none;
             z-index: 1000;
-            transform: scale(1.05);
-            opacity: 0.95;
-            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6));
+            opacity: 0.9;
+            filter: drop-shadow(0 12px 24px rgba(0,0,0,0.7));
         }
 
-        /* Canlı ve Parlak Renkler (Neon Işık Efektli) */
+        /* Power-Up / Reroll Butonu */
+        .reroll-btn {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.1s, box-shadow 0.1s, opacity 0.2s;
+            touch-action: manipulation;
+        }
+        .reroll-btn:active {
+            transform: scale(0.95);
+        }
+        .reroll-btn:disabled {
+            background: #475569;
+            color: #94a3b8;
+            box-shadow: none;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* Renk Paleti */
         .color-1 { background-color: #ef4444; color: #ef4444; }
         .color-2 { background-color: #3b82f6; color: #3b82f6; }
         .color-3 { background-color: #10b981; color: #10b981; }
@@ -135,13 +176,36 @@
         .color-6 { background-color: #ec4899; color: #ec4899; }
         .color-7 { background-color: #06b6d4; color: #06b6d4; }
 
-        @keyframes pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.25); opacity: 0.9; }
-            100% { transform: scale(0); opacity: 0; }
+        /* Patlama ve Kıvılcım Efektleri */
+        .spark {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 99;
+            animation: sparkFly 0.5s ease-out forwards;
         }
-        .clearing {
-            animation: pop 0.3s forwards;
+
+        @keyframes sparkFly {
+            0% {
+                transform: translate(0, 0) scale(1.5);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        @keyframes cellFlash {
+            0% { background-color: #ffffff; box-shadow: 0 0 25px #ffffff, 0 0 40px #f59e0b; }
+            50% { background-color: #f59e0b; }
+            100% { background-color: #334155; box-shadow: none; }
+        }
+
+        .exploding-cell {
+            animation: cellFlash 0.35s ease-out forwards;
         }
     </style>
 </head>
@@ -152,21 +216,32 @@
             <span class="score-label">Skor</span>
             <span id="score" class="score-value">0</span>
         </div>
-        <div id="combo" class="combo-badge">COMBO x2!</div>
+        <div class="score-container" style="align-items: center;">
+            <span class="score-label">Coin</span>
+            <span id="coins" class="coin-value">🪙 0</span>
+        </div>
         <div class="score-container" style="align-items: flex-end;">
             <span class="score-label">En Yüksek</span>
             <span id="best-score" class="score-value" style="color: #cbd5e1;">0</span>
         </div>
     </header>
 
+    <div id="combo" class="combo-badge">COMBO x2!</div>
+
     <div class="game-board-wrapper">
         <div id="grid"></div>
     </div>
 
-    <div class="pieces-container" id="pieces-container">
-        <div class="piece-holder" data-index="0"></div>
-        <div class="piece-holder" data-index="1"></div>
-        <div class="piece-holder" data-index="2"></div>
+    <div class="bottom-panel">
+        <div class="pieces-container" id="pieces-container">
+            <div class="piece-holder" data-index="0"></div>
+            <div class="piece-holder" data-index="1"></div>
+            <div class="piece-holder" data-index="2"></div>
+        </div>
+        
+        <button id="reroll-btn" class="reroll-btn">
+            🔄 Şekil Değiştir (500 🪙)
+        </button>
     </div>
 
     <script>
@@ -174,15 +249,20 @@
         let grid = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
         let gridColors = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
         let score = 0;
-        let bestScore = localStorage.getItem('block_breaker_best') || 0;
+        let coins = parseInt(localStorage.getItem('block_breaker_coins')) || 0;
+        let bestScore = parseInt(localStorage.getItem('block_breaker_best')) || 0;
+        let lastCoinThreshold = 0; // Her 5000 puan takibi için
         
         const gridElement = document.getElementById('grid');
         const scoreElement = document.getElementById('score');
+        const coinsElement = document.getElementById('coins');
         const bestScoreElement = document.getElementById('best-score');
         const comboElement = document.getElementById('combo');
+        const rerollBtn = document.getElementById('reroll-btn');
         const pieceHolders = document.querySelectorAll('.piece-holder');
 
         bestScoreElement.textContent = bestScore;
+        updateCoinsDisplay();
 
         const PIECES = [
             { shape: [[1]], color: 'color-1' },
@@ -200,34 +280,66 @@
         let currentPieces = [null, null, null];
         let activeDrag = null;
 
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function playSound(type) {
+        // Ses Sentezleyicisi
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
+        }
+        
+        function playPlaceSound() {
+            initAudio();
+            if (!audioCtx) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain);
             gain.connect(audioCtx.destination);
 
-            if (type === 'place') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.1);
-            } else if (type === 'clear') {
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.25);
-                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.25);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(320, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.08);
+            
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.08);
+        }
+
+        function playExplosionSound() {
+            initAudio();
+            if (!audioCtx) return;
+
+            const bufferSize = audioCtx.sampleRate * 0.35;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
             }
+
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(800, audioCtx.currentTime);
+            filter.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.35);
+
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            noise.start();
+            noise.stop(audioCtx.currentTime + 0.35);
         }
 
         function createBoard() {
@@ -243,7 +355,7 @@
             }
         }
 
-        function renderPiece(piece, container, cellSize = 22) {
+        function renderPiece(piece, container, cellSize = 20) {
             container.innerHTML = '';
             if (!piece) return;
             
@@ -275,6 +387,29 @@
             checkGameOver();
         }
 
+        // Reroll (Şekil Değiştirme) Fonksiyonu
+        rerollBtn.addEventListener('click', () => {
+            initAudio();
+            if (coins >= 500) {
+                coins -= 500;
+                localStorage.setItem('block_breaker_coins', coins);
+                updateCoinsDisplay();
+
+                // Tüm parçaları yenile
+                for (let i = 0; i < 3; i++) {
+                    const randomPiece = PIECES[Math.floor(Math.random() * PIECES.length)];
+                    currentPieces[i] = randomPiece;
+                    renderPiece(randomPiece, pieceHolders[i]);
+                }
+                checkGameOver();
+            }
+        });
+
+        function updateCoinsDisplay() {
+            coinsElement.textContent = `🪙 ${coins}`;
+            rerollBtn.disabled = coins < 500;
+        }
+
         function setupDragAndDrop() {
             pieceHolders.forEach(holder => {
                 holder.addEventListener('pointerdown', onDragStart);
@@ -282,6 +417,7 @@
         }
 
         function onDragStart(e) {
+            initAudio();
             const index = parseInt(e.currentTarget.dataset.index);
             const piece = currentPieces[index];
             if (!piece) return;
@@ -318,13 +454,11 @@
             const pieceWidth = piece.shape[0].length * cellSize;
             const pieceHeight = piece.shape.length * cellSize;
 
-            // Görseli imlecin/parmağın tam ortasına hizala
             activeDrag.element.style.left = `${clientX - pieceWidth / 2}px`;
             activeDrag.element.style.top = `${clientY - pieceHeight / 2}px`;
 
             clearPreview();
 
-            // Bırakılacak hedef matris hücresini hesapla
             const targetPos = getTargetGridPosition(clientX, clientY);
             if (targetPos) {
                 if (canPlace(piece, targetPos.r, targetPos.c)) {
@@ -340,7 +474,6 @@
         function getTargetGridPosition(clientX, clientY) {
             const boardRect = gridElement.getBoundingClientRect();
             
-            // Eğer dokunulan/sürüklenen alan tahta sınırları içindeyse
             if (
                 clientX >= boardRect.left &&
                 clientX <= boardRect.right &&
@@ -350,13 +483,11 @@
                 const cellSize = boardRect.width / BOARD_SIZE;
                 const piece = activeDrag.piece;
 
-                // Parmak ucunun denk geldiği hücre
-                let touchCol = Math.floor((clientX - boardRect.left) / cellSize);
-                let touchRow = Math.floor((clientY - boardRect.top) / cellSize);
+                let centerCol = Math.floor((clientX - boardRect.left) / cellSize);
+                let centerRow = Math.floor((clientY - boardRect.top) / cellSize);
 
-                // Şeklin sol üst hücresine göre hizalama hesaplaması (Ofset düzeltme)
-                let startR = touchRow - Math.floor(piece.shape.length / 2);
-                let startC = touchCol - Math.floor(piece.shape[0].length / 2);
+                let startR = centerRow - Math.floor((piece.shape.length - 1) / 2);
+                let startC = centerCol - Math.floor((piece.shape[0].length - 1) / 2);
 
                 return { r: startR, c: startC };
             }
@@ -387,7 +518,7 @@
             activeDrag = null;
 
             if (placed) {
-                playSound('place');
+                playPlaceSound();
                 checkLines();
                 if (currentPieces.every(p => p === null)) {
                     spawnPieces();
@@ -434,7 +565,9 @@
                 const r = parseInt(cell.dataset.row);
                 const c = parseInt(cell.dataset.col);
                 if (!grid[r][c]) {
-                    cell.className = 'cell';
+                    if (!cell.classList.contains('exploding-cell')) {
+                        cell.className = 'cell';
+                    }
                 } else {
                     cell.className = `cell filled ${gridColors[r][c]}`;
                 }
@@ -463,6 +596,36 @@
             return document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
         }
 
+        function createSparks(cell) {
+            const rect = cell.getBoundingClientRect();
+            const boardRect = gridElement.getBoundingClientRect();
+            const centerX = rect.left - boardRect.left + rect.width / 2;
+            const centerY = rect.top - boardRect.top + rect.height / 2;
+
+            const sparkColors = ['#f59e0b', '#ef4444', '#38bdf8', '#ffffff', '#fbbf24'];
+
+            for (let i = 0; i < 8; i++) {
+                const spark = document.createElement('div');
+                spark.classList.add('spark');
+                
+                const angle = (Math.PI * 2 / 8) * i + Math.random() * 0.5;
+                const distance = 35 + Math.random() * 25;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
+
+                spark.style.left = `${centerX}px`;
+                spark.style.top = `${centerY}px`;
+                spark.style.backgroundColor = sparkColors[Math.floor(Math.random() * sparkColors.length)];
+                spark.style.boxShadow = `0 0 6px ${spark.style.backgroundColor}`;
+                spark.style.setProperty('--tx', `${tx}px`);
+                spark.style.setProperty('--ty', `${ty}px`);
+
+                gridElement.appendChild(spark);
+
+                setTimeout(() => spark.remove(), 500);
+            }
+        }
+
         function checkLines() {
             let rowsToClear = [];
             let colsToClear = [];
@@ -486,7 +649,7 @@
 
             const totalCleared = rowsToClear.length + colsToClear.length;
             if (totalCleared > 0) {
-                playSound('clear');
+                playExplosionSound();
                 let clearSet = new Set();
 
                 rowsToClear.forEach(r => {
@@ -501,10 +664,13 @@
                     grid[r][c] = 0;
                     gridColors[r][c] = null;
                     const cell = getCellElement(r, c);
-                    cell.classList.add('clearing');
+                    
+                    cell.className = 'cell exploding-cell';
+                    createSparks(cell);
+                    
                     setTimeout(() => {
                         cell.className = 'cell';
-                    }, 300);
+                    }, 350);
                 });
 
                 let comboBonus = totalCleared * 100 * totalCleared;
@@ -527,6 +693,17 @@
         function updateScore(newScore) {
             score = newScore;
             scoreElement.textContent = score;
+
+            // Her 5000 Puanda 1000 Coin Ödülü Ver
+            const currentThreshold = Math.floor(score / 5000);
+            if (currentThreshold > lastCoinThreshold) {
+                const earnedCoins = (currentThreshold - lastCoinThreshold) * 1000;
+                coins += earnedCoins;
+                lastCoinThreshold = currentThreshold;
+                localStorage.setItem('block_breaker_coins', coins);
+                updateCoinsDisplay();
+            }
+
             if (score > bestScore) {
                 bestScore = score;
                 bestScoreElement.textContent = bestScore;
@@ -554,7 +731,7 @@
 
             if (!canMove && currentPieces.some(p => p !== null)) {
                 setTimeout(() => {
-                    alert(`Oyun Bitti!\nToplam Skor: ${score}`);
+                    alert(`Oyun Bitti!\nToplam Skor: ${score}\nMevcut Coin: ${coins}`);
                     resetGame();
                 }, 500);
             }
@@ -564,6 +741,7 @@
             grid = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
             gridColors = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
             currentPieces = [null, null, null];
+            lastCoinThreshold = 0;
             updateScore(0);
             createBoard();
             spawnPieces();
