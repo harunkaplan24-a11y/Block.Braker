@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.blockbreaker.game" version="1.0.0" xmlns="http://www.cordova.io/ns/1.0">
+    <name>Block Breaker</name>
+    <description>10x10 Blok Patlatma Oyunu</description>
+    <author email="dev@example.com">Harun Kaplan</author>
+    <content src="index.html" />
+    <preference name="Orientation" value="portrait" />
+    <preference name="Fullscreen" value="true" />
+    <icon src="icon.png" />
+</widget>
