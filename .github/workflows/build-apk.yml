@@ -1,0 +1,50 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Cordova
+        run: npm install -g cordova
+
+      - name: Create Cordova Project
+        run: |
+          cordova create cordova_app com.blockbreaker.game "Block Breaker"
+          rm -rf cordova_app/www/*
+          cp index.html cordova_app/www/
+          cd cordova_app
+          cordova platform add android@12.0.0
+
+      - name: Build APK
+        run: |
+          cd cordova_app
+          cordova build android --debug
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Block-Breaker-APK
+          path: cordova_app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
