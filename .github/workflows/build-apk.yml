@@ -34,7 +34,7 @@ jobs:
       - name: Install Cordova
         run: npm install -g cordova@12.0.0
 
-      - name: Create Cordova Project
+      - name: Prepare Cordova Project
         run: |
           cordova create cordova_app com.blockbreaker.game BlockBreaker
           rm -rf cordova_app/www/*
@@ -44,12 +44,11 @@ jobs:
           cd cordova_app
           cordova platform add android@12.0.0
 
-      - name: Build APK
-        env:
-          CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: "https://services.gradle.org/distributions/gradle-7.5.1-all.zip"
+      - name: Build APK via Gradle Wrapper
         run: |
-          cd cordova_app
-          cordova build android --debug
+          cd cordova_app/platforms/android
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
