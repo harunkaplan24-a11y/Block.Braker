@@ -46,6 +46,7 @@
             font-size: 28px;
             font-weight: bold;
             color: #38bdf8;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
         }
         .combo-badge {
             font-size: 14px;
@@ -54,6 +55,7 @@
             height: 20px;
             transition: opacity 0.3s;
             opacity: 0;
+            text-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
         }
         .game-board-wrapper {
             position: relative;
@@ -76,15 +78,16 @@
         .cell {
             background-color: #334155;
             border-radius: 4px;
-            transition: background-color 0.15s ease, transform 0.1s ease;
+            transition: background-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
             position: relative;
         }
         .cell.filled {
-            box-shadow: inset 0 0 4px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.3);
+            box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.8), 0 0 12px currentColor;
         }
         .cell.preview {
-            opacity: 0.5;
+            opacity: 0.6;
             transform: scale(0.95);
+            box-shadow: inset 0 0 5px #fff;
         }
         .pieces-container {
             width: 100%;
@@ -112,28 +115,29 @@
         }
         .piece-block {
             border-radius: 3px;
-            box-shadow: inset 0 0 2px rgba(255,255,255,0.4);
+            box-shadow: inset 0 0 4px rgba(255,255,255,0.6);
         }
         .dragging {
             position: fixed;
             pointer-events: none;
             z-index: 1000;
             transform: scale(1.05);
-            opacity: 0.9;
-            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+            opacity: 0.95;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6));
         }
-        /* Parçaların renk sınıfları */
-        .color-1 { background-color: #ef4444; }
-        .color-2 { background-color: #3b82f6; }
-        .color-3 { background-color: #10b981; }
-        .color-4 { background-color: #f59e0b; }
-        .color-5 { background-color: #8b5cf6; }
-        .color-6 { background-color: #ec4899; }
-        .color-7 { background-color: #06b6d4; }
+
+        /* Canlı ve Parlak Renkler (Neon Işık Efektli) */
+        .color-1 { background-color: #ef4444; color: #ef4444; }
+        .color-2 { background-color: #3b82f6; color: #3b82f6; }
+        .color-3 { background-color: #10b981; color: #10b981; }
+        .color-4 { background-color: #f59e0b; color: #f59e0b; }
+        .color-5 { background-color: #8b5cf6; color: #8b5cf6; }
+        .color-6 { background-color: #ec4899; color: #ec4899; }
+        .color-7 { background-color: #06b6d4; color: #06b6d4; }
 
         @keyframes pop {
             0% { transform: scale(1); }
-            50% { transform: scale(1.2); opacity: 0.8; }
+            50% { transform: scale(1.25); opacity: 0.9; }
             100% { transform: scale(0); opacity: 0; }
         }
         .clearing {
@@ -180,7 +184,6 @@
 
         bestScoreElement.textContent = bestScore;
 
-        // Blok Tanımları (Sekiller)
         const PIECES = [
             { shape: [[1]], color: 'color-1' },
             { shape: [[1, 1]], color: 'color-2' },
@@ -197,7 +200,6 @@
         let currentPieces = [null, null, null];
         let activeDrag = null;
 
-        // Ses Efektleri (Web Audio API)
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
         function playSound(type) {
@@ -228,7 +230,6 @@
             }
         }
 
-        // Tahtayı Oluştur
         function createBoard() {
             gridElement.innerHTML = '';
             for (let r = 0; r < BOARD_SIZE; r++) {
@@ -242,7 +243,6 @@
             }
         }
 
-        // Parça Çizici
         function renderPiece(piece, container, cellSize = 22) {
             container.innerHTML = '';
             if (!piece) return;
@@ -275,7 +275,6 @@
             checkGameOver();
         }
 
-        // Sürükleme ve Bırakma Yönetimi (Kesin Hizalama ile)
         function setupDragAndDrop() {
             pieceHolders.forEach(holder => {
                 holder.addEventListener('pointerdown', onDragStart);
@@ -291,7 +290,7 @@
 
             const clone = document.createElement('div');
             clone.classList.add('dragging');
-            // Tahtadaki gerçek hücre boyutuyla eşitle
+            
             const boardCell = document.querySelector('.cell');
             const cellSize = boardCell.getBoundingClientRect().width;
             renderPiece(piece, clone, cellSize);
@@ -316,22 +315,20 @@
             const piece = activeDrag.piece;
             const cellSize = activeDrag.cellSize;
             
-            // Sürüklenen şekli tam ortalayarak parmak/imleç altına hizala
             const pieceWidth = piece.shape[0].length * cellSize;
             const pieceHeight = piece.shape.length * cellSize;
 
+            // Görseli imlecin/parmağın tam ortasına hizala
             activeDrag.element.style.left = `${clientX - pieceWidth / 2}px`;
             activeDrag.element.style.top = `${clientY - pieceHeight / 2}px`;
 
             clearPreview();
 
-            // Hedef kareyi tespit et
-            const targetCell = getTargetCell(clientX, clientY);
-            if (targetCell) {
-                const r = parseInt(targetCell.dataset.row);
-                const c = parseInt(targetCell.dataset.col);
-                if (canPlace(piece, r, c)) {
-                    drawPreview(piece, r, c);
+            // Bırakılacak hedef matris hücresini hesapla
+            const targetPos = getTargetGridPosition(clientX, clientY);
+            if (targetPos) {
+                if (canPlace(piece, targetPos.r, targetPos.c)) {
+                    drawPreview(piece, targetPos.r, targetPos.c);
                 }
             }
         }
@@ -340,10 +337,30 @@
             updateDragPosition(e.clientX, e.clientY);
         }
 
-        function getTargetCell(clientX, clientY) {
-            // İmlecin altındaki hücreyi tespit et
-            const elements = document.elementsFromPoint(clientX, clientY);
-            return elements.find(el => el.classList && el.classList.contains('cell'));
+        function getTargetGridPosition(clientX, clientY) {
+            const boardRect = gridElement.getBoundingClientRect();
+            
+            // Eğer dokunulan/sürüklenen alan tahta sınırları içindeyse
+            if (
+                clientX >= boardRect.left &&
+                clientX <= boardRect.right &&
+                clientY >= boardRect.top &&
+                clientY <= boardRect.bottom
+            ) {
+                const cellSize = boardRect.width / BOARD_SIZE;
+                const piece = activeDrag.piece;
+
+                // Parmak ucunun denk geldiği hücre
+                let touchCol = Math.floor((clientX - boardRect.left) / cellSize);
+                let touchRow = Math.floor((clientY - boardRect.top) / cellSize);
+
+                // Şeklin sol üst hücresine göre hizalama hesaplaması (Ofset düzeltme)
+                let startR = touchRow - Math.floor(piece.shape.length / 2);
+                let startC = touchCol - Math.floor(piece.shape[0].length / 2);
+
+                return { r: startR, c: startC };
+            }
+            return null;
         }
 
         function onDragEnd(e) {
@@ -353,14 +370,12 @@
             window.removeEventListener('pointerup', onDragEnd);
             window.removeEventListener('pointercancel', onDragEnd);
 
-            const targetCell = getTargetCell(e.clientX, e.clientY);
+            const targetPos = getTargetGridPosition(e.clientX, e.clientY);
             let placed = false;
 
-            if (targetCell) {
-                const r = parseInt(targetCell.dataset.row);
-                const c = parseInt(targetCell.dataset.col);
-                if (canPlace(activeDrag.piece, r, c)) {
-                    placePiece(activeDrag.piece, r, c);
+            if (targetPos) {
+                if (canPlace(activeDrag.piece, targetPos.r, targetPos.c)) {
+                    placePiece(activeDrag.piece, targetPos.r, targetPos.c);
                     currentPieces[activeDrag.index] = null;
                     pieceHolders[activeDrag.index].innerHTML = '';
                     placed = true;
@@ -388,7 +403,11 @@
                     if (piece.shape[r][c]) {
                         const targetR = startR + r;
                         const targetC = startC + c;
-                        if (targetR >= BOARD_SIZE || targetC >= BOARD_SIZE || grid[targetR][targetC]) {
+                        if (
+                            targetR < 0 || targetR >= BOARD_SIZE ||
+                            targetC < 0 || targetC >= BOARD_SIZE ||
+                            grid[targetR][targetC]
+                        ) {
                             return false;
                         }
                     }
@@ -411,13 +430,13 @@
         }
 
         function clearPreview() {
-            document.querySelectorAll('.cell.preview').forEach(cell => {
-                cell.className = 'cell';
-                // Tekrar renk ver
+            document.querySelectorAll('.cell').forEach(cell => {
                 const r = parseInt(cell.dataset.row);
                 const c = parseInt(cell.dataset.col);
-                if (grid[r][c]) {
-                    cell.classList.add('filled', gridColors[r][c]);
+                if (!grid[r][c]) {
+                    cell.className = 'cell';
+                } else {
+                    cell.className = `cell filled ${gridColors[r][c]}`;
                 }
             });
         }
@@ -432,7 +451,7 @@
                         grid[targetR][targetC] = 1;
                         gridColors[targetR][targetC] = piece.color;
                         const cell = getCellElement(targetR, targetC);
-                        cell.classList.add('filled', piece.color);
+                        cell.className = `cell filled ${piece.color}`;
                         addedScore += 10;
                     }
                 }
@@ -448,14 +467,12 @@
             let rowsToClear = [];
             let colsToClear = [];
 
-            // Satır kontrolü
             for (let r = 0; r < BOARD_SIZE; r++) {
                 if (grid[r].every(val => val === 1)) {
                     rowsToClear.push(r);
                 }
             }
 
-            // Sütun kontrolü
             for (let c = 0; c < BOARD_SIZE; c++) {
                 let full = true;
                 for (let r = 0; r < BOARD_SIZE; r++) {
@@ -552,7 +569,6 @@
             spawnPieces();
         }
 
-        // Başlat
         createBoard();
         spawnPieces();
         setupDragAndDrop();
