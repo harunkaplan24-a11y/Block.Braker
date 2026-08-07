@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Block Breaker</title>
 
-    <!-- Özel Block Breaker Ana Ekran & Tarayıcı Simgesi (Favicon & Apple Touch Icon) -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230f172a'/><rect x='15' y='15' width='32' height='32' rx='6' fill='%2338bdf8'/><rect x='53' y='15' width='32' height='32' rx='6' fill='%23f59e0b'/><rect x='15' y='53' width='32' height='32' rx='6' fill='%23ec4899'/><g transform='translate(53, 53)'><rect x='0' y='0' width='14' height='14' rx='3' fill='%2310b981' opacity='0.9'/><rect x='18' y='0' width='14' height='14' rx='3' fill='%2310b981' opacity='0.7'/><rect x='0' y='18' width='14' height='14' rx='3' fill='%2310b981' opacity='0.7'/><rect x='18' y='18' width='14' height='14' rx='3' fill='%2310b981' opacity='0.4'/><circle cx='8' cy='8' r='2' fill='%23ffffff'/><circle cx='24' cy='24' r='2' fill='%23ffffff'/></g></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230f172a'/><rect x='15' y='15' width='32' height='32' rx='6' fill='%2338bdf8'/><rect x='53' y='15' width='32' height='32' rx='6' fill='%23f59e0b'/><rect x='15' y='53' width='32' height='32' rx='6' fill='%23ec4899'/><g transform='translate(53, 53)'><rect x='0' y='0' width='14' height='14' rx='3' fill='%2310b981' opacity='0.9'/><rect x='18' y='0' width='14' height='14' rx='3' fill='%2310b981' opacity='0.7'/><rect x='0' y='18' width='14' height='14' rx='3' fill='%2310b981' opacity='0.7'/><rect x='18' y='18' width='14' height='14' rx='3' fill='%2310b981' opacity='0.4'/><circle cx='8' cy='8' r='2' fill='%23ffffff'/><circle cx='24' cy='24' r='2' fill='%23ffffff'/></g></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230f172a'/><rect x='15' y='15' width='32' height='32' rx='6' fill='%2338bdf8'/><rect x='53' y='15' width='32' height='32' rx='6' fill='%23f59e0b'/><rect x='15' y='53' width='32' height='32' rx='6' fill='%23ec4899'/></svg>">
 
     <style>
         * {
@@ -51,13 +49,11 @@
             font-size: 24px;
             font-weight: bold;
             color: #38bdf8;
-            text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
         }
         .coin-value {
             font-size: 24px;
             font-weight: bold;
             color: #f59e0b;
-            text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
         }
         .top-controls {
             width: 100%;
@@ -87,11 +83,10 @@
         .combo-badge {
             font-size: 13px;
             font-weight: bold;
-            color: #e11d48;
+            color: #f43f5e;
             height: 20px;
             transition: opacity 0.3s;
             opacity: 0;
-            text-shadow: 0 0 8px rgba(225, 29, 72, 0.6);
         }
         .game-board-wrapper {
             position: relative;
@@ -107,7 +102,7 @@
             background-color: #1e293b;
             border-radius: 12px;
             padding: 8px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
             aspect-ratio: 1 / 1;
             width: 100%;
             position: relative;
@@ -118,14 +113,16 @@
             transition: background-color 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
             position: relative;
         }
+
+        /* YUMUŞATILMIŞ VE PARLAMASI ALINMIŞ BLOK STİLLERİ */
         .cell.filled {
-            box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.8), 0 0 12px currentColor;
+            box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.25);
         }
         .cell.preview {
-            opacity: 0.65;
+            opacity: 0.5;
             transform: scale(0.95);
-            box-shadow: inset 0 0 6px #fff;
         }
+
         .bottom-panel {
             width: 100%;
             max-width: 420px;
@@ -193,19 +190,19 @@
         }
         .piece-block {
             border-radius: 3px;
-            box-shadow: inset 0 0 4px rgba(255,255,255,0.6);
+            box-shadow: inset 0 -1px 0 rgba(0,0,0,0.2);
         }
         .dragging {
             position: fixed;
             pointer-events: none;
             z-index: 1000;
-            opacity: 0.85;
-            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.6));
+            opacity: 0.9;
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.4));
             will-change: transform, left, top;
         }
 
         .reroll-btn {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
+            background: #d97706;
             color: #ffffff;
             border: none;
             border-radius: 10px;
@@ -213,31 +210,29 @@
             font-size: 14px;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: transform 0.1s, box-shadow 0.1s, opacity 0.2s;
+            transition: transform 0.1s, opacity 0.2s;
             touch-action: manipulation;
         }
         .reroll-btn:active { transform: scale(0.95); }
         .reroll-btn:disabled {
             background: #475569;
             color: #94a3b8;
-            box-shadow: none;
             cursor: not-allowed;
             opacity: 0.6;
         }
 
-        /* Blok Renk Kataloğu */
-        .color-1 { background-color: #ef4444; color: #ef4444; }
-        .color-2 { background-color: #3b82f6; color: #3b82f6; }
-        .color-3 { background-color: #10b981; color: #10b981; }
-        .color-4 { background-color: #f59e0b; color: #f59e0b; }
-        .color-5 { background-color: #8b5cf6; color: #8b5cf6; }
-        .color-6 { background-color: #ec4899; color: #ec4899; }
-        .color-7 { background-color: #06b6d4; color: #06b6d4; }
-        .color-8 { background-color: #a855f7; color: #a855f7; }
+        /* MAT RENK KATALOĞU (Göz Yormayan Tonlar) */
+        .color-1 { background-color: #e11d48; color: #e11d48; }
+        .color-2 { background-color: #2563eb; color: #2563eb; }
+        .color-3 { background-color: #059669; color: #059669; }
+        .color-4 { background-color: #d97706; color: #d97706; }
+        .color-5 { background-color: #7c3aed; color: #7c3aed; }
+        .color-6 { background-color: #db2777; color: #db2777; }
+        .color-7 { background-color: #0891b2; color: #0891b2; }
+        .color-8 { background-color: #9333ea; color: #9333ea; }
 
         /* Modal & Menü Tasarımları */
         .modal-overlay {
@@ -259,13 +254,13 @@
         }
         .modal-card {
             background: #1e293b;
-            border: 2px solid #38bdf8;
+            border: 1px solid #334155;
             border-radius: 20px;
             padding: 25px 20px;
             width: 90%;
             max-width: 360px;
             text-align: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 20px rgba(56, 189, 248, 0.2);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
             transform: scale(0.8);
             transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
@@ -310,13 +305,12 @@
             transition: all 0.2s;
         }
         .toggle-btn.on {
-            background: #10b981;
+            background: #059669;
             color: #ffffff;
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
         }
 
         .menu-action-btn {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
+            background: #dc2626;
             color: white;
             border: none;
             width: 100%;
@@ -326,7 +320,6 @@
             border-radius: 12px;
             cursor: pointer;
             margin-top: 10px;
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
             transition: transform 0.1s;
         }
         .menu-action-btn:active { transform: scale(0.96); }
@@ -344,7 +337,6 @@
             margin-top: 8px;
         }
 
-        /* Kıvılcım Animasyonu */
         .spark {
             position: absolute;
             border-radius: 50%;
@@ -354,7 +346,7 @@
         }
 
         @keyframes fireworkSpark {
-            0% { transform: translate(0, 0) scale(1.5); opacity: 1; }
+            0% { transform: translate(0, 0) scale(1.2); opacity: 0.8; }
             100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
         }
 
@@ -394,13 +386,11 @@
 
     <div class="bottom-panel">
         <div class="pieces-area">
-            <!-- Yedekleme Kutusu -->
             <div class="hold-section">
                 <span class="hold-title">📦 Yedek</span>
                 <div class="piece-holder hold-box" id="hold-holder" data-type="hold"></div>
             </div>
 
-            <!-- Normal Şekil Yuvaları -->
             <div class="pieces-container" id="pieces-container">
                 <div class="piece-holder" data-index="0" data-type="main"></div>
                 <div class="piece-holder" data-index="1" data-type="main"></div>
@@ -413,7 +403,6 @@
         </button>
     </div>
 
-    <!-- Ayarlar Menüsü Modalı -->
     <div id="settings-modal" class="modal-overlay">
         <div class="modal-card">
             <h2 class="modal-title">Ayarlar</h2>
@@ -433,7 +422,6 @@
         </div>
     </div>
 
-    <!-- Oyun Bitti Modalı -->
     <div id="game-over-modal" class="modal-overlay">
         <div class="modal-card">
             <h2 class="modal-title" style="color: #ef4444;">Oyun Bitti</h2>
@@ -444,7 +432,7 @@
             <div style="font-size: 14px; color: #cbd5e1; margin-bottom: 20px;">
                 En Yüksek Skor: <strong id="modal-best-score" style="color: #38bdf8;">0</strong>
             </div>
-            <button id="modal-restart-btn" class="menu-action-btn" style="background: linear-gradient(135deg, #38bdf8, #0284c7);">Yeniden Başla</button>
+            <button id="modal-restart-btn" class="menu-action-btn" style="background: #0284c7;">Yeniden Başla</button>
         </div>
     </div>
 
@@ -457,7 +445,6 @@
         let bestScore = parseInt(localStorage.getItem('block_breaker_best')) || 0;
         let lastCoinThreshold = 0;
 
-        // Ayarlar
         let musicEnabled = JSON.parse(localStorage.getItem('bb_music') ?? 'true');
         let sfxEnabled = JSON.parse(localStorage.getItem('bb_sfx') ?? 'true');
 
@@ -471,7 +458,6 @@
         const pieceHolders = document.querySelectorAll('.piece-holder[data-type="main"]');
         const holdHolder = document.getElementById('hold-holder');
         
-        // Modallar
         const settingsModal = document.getElementById('settings-modal');
         const toggleMusicBtn = document.getElementById('toggle-music');
         const toggleSfxBtn = document.getElementById('toggle-sfx');
@@ -487,17 +473,16 @@
         updateCoinsDisplay();
         syncSettingUI();
 
-        // --- GÜNCELLENMİŞ ŞEKİL HAVUZU (ÇUBUKLAR EKLENDİ) ---
         const PIECES = [
             { shape: [[1]], color: 'color-1' },
             { shape: [[1, 1]], color: 'color-2' },
             { shape: [[1], [1]], color: 'color-2' },
-            { shape: [[1, 1, 1]], color: 'color-3' }, // Yatay 3'lü Çubuk
-            { shape: [[1], [1], [1]], color: 'color-3' }, // Dikey 3'lü Çubuk
-            { shape: [[1, 1, 1, 1]], color: 'color-8' }, // Yatay 4'lü Çubuk
-            { shape: [[1], [1], [1], [1]], color: 'color-8' }, // Dikey 4'lü Çubuk
-            { shape: [[1, 1, 1, 1, 1]], color: 'color-7' }, // Yatay 5'li Çubuk
-            { shape: [[1], [1], [1], [1], [1]], color: 'color-7' }, // Dikey 5'li Çubuk
+            { shape: [[1, 1, 1]], color: 'color-3' },
+            { shape: [[1], [1], [1]], color: 'color-3' },
+            { shape: [[1, 1, 1, 1]], color: 'color-8' },
+            { shape: [[1], [1], [1], [1]], color: 'color-8' },
+            { shape: [[1, 1, 1, 1, 1]], color: 'color-7' },
+            { shape: [[1], [1], [1], [1], [1]], color: 'color-7' },
             { shape: [[1, 1], [1, 1]], color: 'color-4' },
             { shape: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: 'color-5' },
             { shape: [[1, 0], [1, 1]], color: 'color-6' },
@@ -507,10 +492,9 @@
 
         let currentPieces = [null, null, null];
         let heldPiece = null;
-        let canHold = true; // Her hamlede sadece 1 kez yedek değişimi yapılabilir
+        let canHold = true;
         let activeDrag = null;
 
-        // Web Audio Motoru
         let audioCtx = null;
         let ambientTimer = null;
 
@@ -526,7 +510,6 @@
 
         window.addEventListener('pointerdown', initAudio, { once: false });
 
-        // --- MÜZİK VE SES MOTORU ---
         function playTone(freq, duration = 2.5) {
             if (!audioCtx || !musicEnabled) return;
 
@@ -537,7 +520,7 @@
             osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
 
             gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 0.04);
+            gain.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 0.04);
             gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
 
             osc.connect(gain);
@@ -563,7 +546,6 @@
             nextNote();
         }
 
-        // --- OTOMATİK ARKA PLAN DURAKLATMA (AUTO PAUSE) ---
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 pauseGameAndAudio();
@@ -586,7 +568,6 @@
             }
         });
 
-        // --- MENÜ KONTROLLERİ ---
         function syncSettingUI() {
             toggleMusicBtn.textContent = musicEnabled ? 'AÇIK' : 'KAPALI';
             toggleMusicBtn.className = `toggle-btn ${musicEnabled ? 'on' : ''}`;
@@ -629,7 +610,6 @@
             resetGame();
         });
 
-        // --- SES EFEKTLERİ ---
         function playPlaceSound() {
             if (!sfxEnabled || !audioCtx) return;
             const osc = audioCtx.createOscillator();
@@ -638,10 +618,10 @@
             gain.connect(audioCtx.destination);
 
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.08);
+            osc.frequency.setValueAtTime(350, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(140, audioCtx.currentTime + 0.08);
             
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
             gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
             
             osc.start();
@@ -656,10 +636,10 @@
             const gain = audioCtx.createGain();
 
             osc.type = 'triangle';
-            osc.frequency.setValueAtTime(320, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + duration);
+            osc.frequency.setValueAtTime(280, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + duration);
 
-            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
 
             osc.connect(gain);
@@ -808,14 +788,13 @@
 
             clearPreview();
 
-            // Yedek kutusu üzeri kontrolü
             const holdRect = holdHolder.getBoundingClientRect();
             if (
                 clientX >= holdRect.left && clientX <= holdRect.right &&
                 clientY >= holdRect.top && clientY <= holdRect.bottom
             ) {
                 if (!activeDrag.isHold && canHold) {
-                    holdHolder.style.backgroundColor = 'rgba(56, 189, 248, 0.3)';
+                    holdHolder.style.backgroundColor = 'rgba(56, 189, 248, 0.2)';
                 }
                 return;
             } else {
@@ -873,7 +852,6 @@
                 e.clientY >= holdRect.top && e.clientY <= holdRect.bottom
             );
 
-            // 1. Şekil Yedekleme Kutusuna Bırakıldıysa
             if (droppedInHold && !activeDrag.isHold && canHold) {
                 const temp = heldPiece;
                 heldPiece = activeDrag.piece;
@@ -900,7 +878,6 @@
                 return;
             }
 
-            // 2. Şekil Tahtaya Yerleştirildiyse
             const targetPos = getTargetGridPosition(e.clientX, e.clientY);
             let placed = false;
 
@@ -1008,19 +985,19 @@
             const centerX = rect.left - boardRect.left + rect.width / 2;
             const centerY = rect.top - boardRect.top + rect.height / 2;
 
-            const fireworkColors = ['#f59e0b', '#38bdf8', '#ec4899', '#10b981', '#ffffff'];
+            const fireworkColors = ['#d97706', '#0891b2', '#db2777', '#059669', '#ffffff'];
 
-            const sparkCount = 10;
+            const sparkCount = 8;
             for (let i = 0; i < sparkCount; i++) {
                 const spark = document.createElement('div');
                 spark.classList.add('spark');
                 
                 const angle = (Math.PI * 2 / sparkCount) * i;
-                const distance = 25 + Math.random() * 20;
+                const distance = 20 + Math.random() * 15;
                 const tx = Math.cos(angle) * distance;
                 const ty = Math.sin(angle) * distance;
 
-                const sparkSize = Math.floor(Math.random() * 4) + 3;
+                const sparkSize = Math.floor(Math.random() * 3) + 3;
                 spark.style.width = `${sparkSize}px`;
                 spark.style.height = `${sparkSize}px`;
 
@@ -1029,7 +1006,6 @@
                 
                 const color = fireworkColors[Math.floor(Math.random() * fireworkColors.length)];
                 spark.style.backgroundColor = color;
-                spark.style.boxShadow = `0 0 6px ${color}`;
                 spark.style.setProperty('--tx', `${tx}px`);
                 spark.style.setProperty('--ty', `${ty}px`);
 
@@ -1125,7 +1101,6 @@
         function checkGameOver() {
             let canMove = false;
 
-            // Hem normal yuvalardaki hem de yedekteki şekilleri kontrol et
             const allAvailablePieces = [...currentPieces, heldPiece].filter(p => p !== null);
 
             for (let piece of allAvailablePieces) {
