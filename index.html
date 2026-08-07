@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Block Breaker</title>
 
-    <!-- Oyun Ekran / Tarayıcı Simgesi (Favicon) -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f172a'/><rect x='15' y='15' width='30' height='30' rx='6' fill='%2338bdf8'/><rect x='55' y='15' width='30' height='30' rx='6' fill='%23f59e0b'/><rect x='15' y='55' width='30' height='30' rx='6' fill='%23ec4899'/><rect x='55' y='55' width='30' height='30' rx='6' fill='%2310b981'/></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f172a'/><rect x='15' y='15' width='30' height='30' rx='6' fill='%2338bdf8'/><rect x='55' y='15' width='30' height='30' rx='6' fill='%23f59e0b'/><rect x='15' y='55' width='30' height='30' rx='6' fill='%23ec4899'/><rect x='55' y='55' width='30' height='30' rx='6' fill='%2310b981'/></svg>">
+    <!-- Özel Block Breaker Ana Ekran & Tarayıcı Simgesi (Favicon & Apple Touch Icon) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230f172a'/><rect x='15' y='15' width='32' height='32' rx='6' fill='%2338bdf8'/><rect x='53' y='15' width='32' height='32' rx='6' fill='%23f59e0b'/><rect x='15' y='53' width='32' height='32' rx='6' fill='%23ec4899'/><g transform='translate(53, 53)'><rect x='0' y='0' width='14' height='14' rx='3' fill='%2310b981' opacity='0.9'/><rect x='18' y='0' width='14' height='14' rx='3' fill='%2310b981' opacity='0.7'/><rect x='0' y='18' width='14' height='14' rx='3' fill='%2310b981' opacity='0.7'/><rect x='18' y='18' width='14' height='14' rx='3' fill='%2310b981' opacity='0.4'/><circle cx='8' cy='8' r='2' fill='%23ffffff'/><circle cx='24' cy='24' r='2' fill='%23ffffff'/></g></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230f172a'/><rect x='15' y='15' width='32' height='32' rx='6' fill='%2338bdf8'/><rect x='53' y='15' width='32' height='32' rx='6' fill='%23f59e0b'/><rect x='15' y='53' width='32' height='32' rx='6' fill='%23ec4899'/><g transform='translate(53, 53)'><rect x='0' y='0' width='14' height='14' rx='3' fill='%2310b981' opacity='0.9'/><rect x='18' y='0' width='14' height='14' rx='3' fill='%2310b981' opacity='0.7'/><rect x='0' y='18' width='14' height='14' rx='3' fill='%2310b981' opacity='0.7'/><rect x='18' y='18' width='14' height='14' rx='3' fill='%2310b981' opacity='0.4'/><circle cx='8' cy='8' r='2' fill='%23ffffff'/><circle cx='24' cy='24' r='2' fill='%23ffffff'/></g></svg>">
 
     <style>
         * {
@@ -115,7 +115,7 @@
         .cell {
             background-color: #334155;
             border-radius: 4px;
-            transition: background-color 0.05s ease, transform 0.05s ease;
+            transition: background-color 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
             position: relative;
         }
         .cell.filled {
@@ -311,28 +311,25 @@
             margin-top: 8px;
         }
 
-        /* Patlama ve Kıvılcım Animasyonu */
+        /* Kıvılcım Animasyonu */
         .spark {
             position: absolute;
             border-radius: 50%;
             pointer-events: none;
             z-index: 99;
-            animation: fireworkSpark 0.75s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+            animation: fireworkSpark 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
         }
 
         @keyframes fireworkSpark {
-            0% { transform: translate(0, 0) scale(1.8); opacity: 1; }
-            80% { opacity: 0.8; }
+            0% { transform: translate(0, 0) scale(1.5); opacity: 1; }
             100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
         }
 
-        @keyframes cellFlash {
-            0% { background-color: #ffffff; box-shadow: 0 0 35px #ffffff, 0 0 60px #ff4500; }
-            40% { background-color: #ff4500; }
-            100% { background-color: #334155; box-shadow: none; }
+        .exploding-cell {
+            transform: scale(0.85);
+            opacity: 0.2;
+            transition: transform 0.25s ease-out, opacity 0.25s ease-out;
         }
-
-        .exploding-cell { animation: cellFlash 0.4s ease-out forwards; }
     </style>
 </head>
 <body>
@@ -380,7 +377,7 @@
             <h2 class="modal-title">Ayarlar</h2>
             
             <div class="menu-setting-row">
-                <span class="setting-label">🎵 Müzik</span>
+                <span class="setting-label">🎹 Piyano Müziği</span>
                 <button id="toggle-music" class="toggle-btn on">AÇIK</button>
             </div>
 
@@ -473,70 +470,82 @@
         // Web Audio Motoru
         let audioCtx = null;
         let ambientTimer = null;
+        let isUserInteracted = false;
 
-        function initAudio() {
+        // Mobil Titreşim Motoru Uyumluluğu
+        function initAudioAndVibration() {
+            if (!isUserInteracted) {
+                isUserInteracted = true;
+                // Titreşim iznini ilk dokunuşta aktifleştir
+                if (navigator.vibrate) {
+                    try { navigator.vibrate(10); } catch(e) {}
+                }
+            }
+
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                startLoungeAmbientMusic();
+                startPianoAmbientMusic();
             }
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
         }
 
+        // Dokunma/Tıklama olaylarında titreşim ve sesi aktif et
+        window.addEventListener('pointerdown', initAudioAndVibration, { once: false });
+
         function triggerVibration(pattern) {
-            if (vibeEnabled && navigator.vibrate) {
-                navigator.vibrate(pattern);
+            if (vibeEnabled && 'vibrate' in navigator) {
+                try {
+                    navigator.vibrate(pattern);
+                } catch(e) {
+                    console.log("Vibration blocked or unsupported");
+                }
             }
         }
 
-        // --- SALON / MEDİTASYON SAKİN PİYANO AKOR DİZİLİMİ ---
-        function playLoungeChord(freqs, duration = 3.5) {
+        // --- AKUSTİK PİYANO TONLARI ---
+        function playPianoNote(freq, duration = 2.5) {
             if (!audioCtx || !musicEnabled) return;
 
-            freqs.forEach((freq, idx) => {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
 
-                osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
 
-                // Yumuşak meditasyon geçişi (Slow Attack & Long Release)
-                const attack = 0.4 + idx * 0.1;
-                gain.gain.setValueAtTime(0, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.04, audioCtx.currentTime + attack);
-                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 0.04);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
 
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
 
-                osc.start(audioCtx.currentTime + idx * 0.08);
-                osc.stop(audioCtx.currentTime + duration);
-            });
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + duration);
         }
 
-        function startLoungeAmbientMusic() {
-            // Rahatlatıcı Lounge / Meditasyon Akor Dizilimi (Maj7 & Min7 Zengin Akorlar)
-            const chords = [
-                [261.63, 329.63, 392.00, 493.88], // Cmaj7 (Do - Mi - Sol - Si)
-                [220.00, 261.63, 329.63, 392.00], // Am7 (La - Do - Mi - Sol)
-                [174.61, 220.00, 261.63, 329.63], // Fmaj7 (Fa - La - Do - Mi)
-                [196.00, 246.94, 293.66, 349.23]  // G7 (Sol - Si - Re - Fa)
-            ];
-            let chordIndex = 0;
+        function startPianoAmbientMusic() {
+            const pianoNotes = [261.63, 329.63, 392.00, 493.88, 523.25];
+            let noteIdx = 0;
 
-            function playNextAmbient() {
+            function playNextPianoNote() {
                 if (musicEnabled) {
-                    playLoungeChord(chords[chordIndex % chords.length], 4.0);
-                    chordIndex++;
+                    const freq = pianoNotes[noteIdx % pianoNotes.length];
+                    playPianoNote(freq, 2.2);
+                    
+                    if (noteIdx % 3 === 0) {
+                        playPianoNote(freq * 1.25, 2.0);
+                    }
+                    noteIdx++;
                 }
-                ambientTimer = setTimeout(playNextAmbient, 3600);
+                ambientTimer = setTimeout(playNextPianoNote, 2500);
             }
 
-            playNextAmbient();
+            playNextPianoNote();
         }
 
-        // --- MENÜ VE AYAR KONTROLLERİ ---
+        // --- MENÜ KONTROLLERİ ---
         function syncSettingUI() {
             toggleMusicBtn.textContent = musicEnabled ? 'AÇIK' : 'KAPALI';
             toggleMusicBtn.className = `toggle-btn ${musicEnabled ? 'on' : ''}`;
@@ -549,7 +558,7 @@
         }
 
         menuBtn.addEventListener('click', () => {
-            initAudio();
+            initAudioAndVibration();
             settingsModal.classList.add('active');
         });
 
@@ -573,6 +582,7 @@
             vibeEnabled = !vibeEnabled;
             localStorage.setItem('bb_vibe', JSON.stringify(vibeEnabled));
             syncSettingUI();
+            if (vibeEnabled) triggerVibration([40, 30, 40]);
         });
 
         restartGameBtn.addEventListener('click', () => {
@@ -587,19 +597,17 @@
 
         // --- SES EFEKTLERİ ---
         function playPlaceSound() {
-            if (!sfxEnabled) return;
-            initAudio();
-            if (!audioCtx) return;
+            if (!sfxEnabled || !audioCtx) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain);
             gain.connect(audioCtx.destination);
 
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(450, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.08);
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.08);
             
-            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
             gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
             
             osc.start();
@@ -607,53 +615,24 @@
         }
 
         function playExplosionSound() {
-            if (!sfxEnabled) return;
-            initAudio();
-            if (!audioCtx) return;
+            if (!sfxEnabled || !audioCtx) return;
 
-            const duration = 0.85;
-            
-            // Sub-Bass Boom
-            const subOsc = audioCtx.createOscillator();
-            const subGain = audioCtx.createGain();
-            subOsc.type = 'sine';
-            subOsc.frequency.setValueAtTime(170, audioCtx.currentTime);
-            subOsc.frequency.exponentialRampToValueAtTime(25, audioCtx.currentTime + duration);
+            const duration = 0.25;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
 
-            subGain.gain.setValueAtTime(1.6, audioCtx.currentTime);
-            subGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(320, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + duration);
 
-            subOsc.connect(subGain);
-            subGain.connect(audioCtx.destination);
-            subOsc.start();
-            subOsc.stop(audioCtx.currentTime + duration);
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
 
-            // Explosion Blast Noise
-            const bufferSize = audioCtx.sampleRate * duration;
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const output = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-                output[i] = Math.random() * 2 - 1;
-            }
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
 
-            const noise = audioCtx.createBufferSource();
-            noise.buffer = buffer;
-
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(1200, audioCtx.currentTime);
-            filter.frequency.exponentialRampToValueAtTime(35, audioCtx.currentTime + duration);
-
-            const noiseGain = audioCtx.createGain();
-            noiseGain.gain.setValueAtTime(2.2, audioCtx.currentTime);
-            noiseGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-
-            noise.connect(filter);
-            filter.connect(noiseGain);
-            noiseGain.connect(audioCtx.destination);
-
-            noise.start();
-            noise.stop(audioCtx.currentTime + duration);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
         }
 
         function createBoard() {
@@ -703,7 +682,7 @@
         }
 
         rerollBtn.addEventListener('click', () => {
-            initAudio();
+            initAudioAndVibration();
             if (coins >= 500) {
                 coins -= 500;
                 localStorage.setItem('block_breaker_coins', coins);
@@ -714,7 +693,7 @@
                     currentPieces[i] = randomPiece;
                     renderPiece(randomPiece, pieceHolders[i]);
                 }
-                triggerVibration(40);
+                triggerVibration(50);
                 saveGameState();
                 checkGameOver();
             }
@@ -732,7 +711,7 @@
         }
 
         function onDragStart(e) {
-            initAudio();
+            initAudioAndVibration();
             const index = parseInt(e.currentTarget.dataset.index);
             const piece = currentPieces[index];
             if (!piece) return;
@@ -835,7 +814,7 @@
 
             if (placed) {
                 playPlaceSound();
-                triggerVibration(25);
+                triggerVibration(40); // Yerleştirme Titreşimi
                 checkLines();
                 if (currentPieces.every(p => p === null)) {
                     spawnPieces();
@@ -920,19 +899,19 @@
             const centerX = rect.left - boardRect.left + rect.width / 2;
             const centerY = rect.top - boardRect.top + rect.height / 2;
 
-            const fireworkColors = ['#ff4500', '#f59e0b', '#38bdf8', '#ec4899', '#10b981', '#ffffff', '#fbbf24'];
+            const fireworkColors = ['#f59e0b', '#38bdf8', '#ec4899', '#10b981', '#ffffff'];
 
-            const sparkCount = 18;
+            const sparkCount = 12;
             for (let i = 0; i < sparkCount; i++) {
                 const spark = document.createElement('div');
                 spark.classList.add('spark');
                 
-                const angle = (Math.PI * 2 / sparkCount) * i + Math.random() * 0.4;
-                const distance = 45 + Math.random() * 55;
+                const angle = (Math.PI * 2 / sparkCount) * i;
+                const distance = 30 + Math.random() * 25;
                 const tx = Math.cos(angle) * distance;
-                const ty = Math.sin(angle) * distance + 20;
+                const ty = Math.sin(angle) * distance;
 
-                const sparkSize = Math.floor(Math.random() * 6) + 4;
+                const sparkSize = Math.floor(Math.random() * 4) + 3;
                 spark.style.width = `${sparkSize}px`;
                 spark.style.height = `${sparkSize}px`;
 
@@ -941,12 +920,12 @@
                 
                 const color = fireworkColors[Math.floor(Math.random() * fireworkColors.length)];
                 spark.style.backgroundColor = color;
-                spark.style.boxShadow = `0 0 10px ${color}, 0 0 20px ${color}`;
+                spark.style.boxShadow = `0 0 6px ${color}`;
                 spark.style.setProperty('--tx', `${tx}px`);
                 spark.style.setProperty('--ty', `${ty}px`);
 
                 gridElement.appendChild(spark);
-                setTimeout(() => spark.remove(), 750);
+                setTimeout(() => spark.remove(), 600);
             }
         }
 
@@ -974,7 +953,7 @@
             const totalCleared = rowsToClear.length + colsToClear.length;
             if (totalCleared > 0) {
                 playExplosionSound();
-                triggerVibration([80, 50, 100]); // Patlama Titreşimi
+                triggerVibration([60, 40, 80]); // Çift Vuruş Güçlü Patlama Titreşimi
 
                 let clearSet = new Set();
                 rowsToClear.forEach(r => {
@@ -995,7 +974,7 @@
                     
                     setTimeout(() => {
                         cell.className = 'cell';
-                    }, 400);
+                    }, 250);
                 });
 
                 let comboBonus = totalCleared * 100 * totalCleared;
@@ -1062,7 +1041,6 @@
             }
         }
 
-        // Durumu Kaydet (Kaldığı Yerden Devam Etmek İçin)
         function saveGameState() {
             const state = {
                 grid: grid,
@@ -1074,7 +1052,6 @@
             localStorage.setItem('block_breaker_saved_state', JSON.stringify(state));
         }
 
-        // Durumu Yükle
         function loadGameState() {
             const saved = localStorage.getItem('block_breaker_saved_state');
             if (saved) {
@@ -1110,7 +1087,6 @@
             return false;
         }
 
-        // Oyunu Sıfırla
         function resetGame() {
             grid = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
             gridColors = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
@@ -1123,7 +1099,6 @@
             saveGameState();
         }
 
-        // Oyunu Başlat
         createBoard();
         setupDragAndDrop();
 
