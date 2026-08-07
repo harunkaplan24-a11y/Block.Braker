@@ -139,20 +139,53 @@
             align-items: center;
             gap: 10px;
         }
-        .pieces-container {
+        .pieces-area {
             width: 100%;
-            height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 5px;
+        }
+        .hold-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-right: 8px;
+            border-right: 2px dashed #334155;
+        }
+        .hold-title {
+            font-size: 10px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .pieces-container {
+            flex: 1;
+            height: 100px;
             display: flex;
             justify-content: space-around;
             align-items: center;
         }
         .piece-holder {
-            width: 90px;
-            height: 90px;
+            width: 75px;
+            height: 75px;
             display: flex;
             justify-content: center;
             align-items: center;
             touch-action: none;
+            background: rgba(15, 23, 42, 0.3);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.05);
+            position: relative;
+        }
+        .piece-holder.hold-box {
+            border: 2px dashed #38bdf8;
+            background: rgba(56, 189, 248, 0.05);
+        }
+        .piece-holder.disabled {
+            opacity: 0.4;
+            pointer-events: none;
         }
         .piece-grid {
             display: grid;
@@ -204,6 +237,7 @@
         .color-5 { background-color: #8b5cf6; color: #8b5cf6; }
         .color-6 { background-color: #ec4899; color: #ec4899; }
         .color-7 { background-color: #06b6d4; color: #06b6d4; }
+        .color-8 { background-color: #a855f7; color: #a855f7; }
 
         /* Modal & Menü Tasarımları */
         .modal-overlay {
@@ -247,7 +281,6 @@
             letter-spacing: 1px;
         }
 
-        /* Menü İçi Satırlar ve Toggle Düğmeleri */
         .menu-setting-row {
             display: flex;
             justify-content: space-between;
@@ -360,10 +393,19 @@
     </div>
 
     <div class="bottom-panel">
-        <div class="pieces-container" id="pieces-container">
-            <div class="piece-holder" data-index="0"></div>
-            <div class="piece-holder" data-index="1"></div>
-            <div class="piece-holder" data-index="2"></div>
+        <div class="pieces-area">
+            <!-- Yedekleme Kutusu -->
+            <div class="hold-section">
+                <span class="hold-title">📦 Yedek</span>
+                <div class="piece-holder hold-box" id="hold-holder" data-type="hold"></div>
+            </div>
+
+            <!-- Normal Şekil Yuvaları -->
+            <div class="pieces-container" id="pieces-container">
+                <div class="piece-holder" data-index="0" data-type="main"></div>
+                <div class="piece-holder" data-index="1" data-type="main"></div>
+                <div class="piece-holder" data-index="2" data-type="main"></div>
+            </div>
         </div>
         
         <button id="reroll-btn" class="reroll-btn">
@@ -377,18 +419,13 @@
             <h2 class="modal-title">Ayarlar</h2>
             
             <div class="menu-setting-row">
-                <span class="setting-label">🎹 Piyano Müziği</span>
+                <span class="setting-label">🎵 Müzik</span>
                 <button id="toggle-music" class="toggle-btn on">AÇIK</button>
             </div>
 
             <div class="menu-setting-row">
                 <span class="setting-label">🔊 Ses Efektleri</span>
                 <button id="toggle-sfx" class="toggle-btn on">AÇIK</button>
-            </div>
-
-            <div class="menu-setting-row">
-                <span class="setting-label">📳 Titreşim</span>
-                <button id="toggle-vibe" class="toggle-btn on">AÇIK</button>
             </div>
 
             <button id="restart-game-btn" class="menu-action-btn">🔄 Oyunu Yeniden Başlat</button>
@@ -420,10 +457,9 @@
         let bestScore = parseInt(localStorage.getItem('block_breaker_best')) || 0;
         let lastCoinThreshold = 0;
 
-        // Ayar Durumları
+        // Ayarlar
         let musicEnabled = JSON.parse(localStorage.getItem('bb_music') ?? 'true');
         let sfxEnabled = JSON.parse(localStorage.getItem('bb_sfx') ?? 'true');
-        let vibeEnabled = JSON.parse(localStorage.getItem('bb_vibe') ?? 'true');
 
         const gridElement = document.getElementById('grid');
         const scoreElement = document.getElementById('score');
@@ -432,13 +468,13 @@
         const comboElement = document.getElementById('combo');
         const rerollBtn = document.getElementById('reroll-btn');
         const menuBtn = document.getElementById('menu-btn');
-        const pieceHolders = document.querySelectorAll('.piece-holder');
+        const pieceHolders = document.querySelectorAll('.piece-holder[data-type="main"]');
+        const holdHolder = document.getElementById('hold-holder');
         
         // Modallar
         const settingsModal = document.getElementById('settings-modal');
         const toggleMusicBtn = document.getElementById('toggle-music');
         const toggleSfxBtn = document.getElementById('toggle-sfx');
-        const toggleVibeBtn = document.getElementById('toggle-vibe');
         const restartGameBtn = document.getElementById('restart-game-btn');
         const closeMenuBtn = document.getElementById('close-menu-btn');
 
@@ -451,12 +487,17 @@
         updateCoinsDisplay();
         syncSettingUI();
 
+        // --- GÜNCELLENMİŞ ŞEKİL HAVUZU (ÇUBUKLAR EKLENDİ) ---
         const PIECES = [
             { shape: [[1]], color: 'color-1' },
             { shape: [[1, 1]], color: 'color-2' },
             { shape: [[1], [1]], color: 'color-2' },
-            { shape: [[1, 1, 1]], color: 'color-3' },
-            { shape: [[1], [1], [1]], color: 'color-3' },
+            { shape: [[1, 1, 1]], color: 'color-3' }, // Yatay 3'lü Çubuk
+            { shape: [[1], [1], [1]], color: 'color-3' }, // Dikey 3'lü Çubuk
+            { shape: [[1, 1, 1, 1]], color: 'color-8' }, // Yatay 4'lü Çubuk
+            { shape: [[1], [1], [1], [1]], color: 'color-8' }, // Dikey 4'lü Çubuk
+            { shape: [[1, 1, 1, 1, 1]], color: 'color-7' }, // Yatay 5'li Çubuk
+            { shape: [[1], [1], [1], [1], [1]], color: 'color-7' }, // Dikey 5'li Çubuk
             { shape: [[1, 1], [1, 1]], color: 'color-4' },
             { shape: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: 'color-5' },
             { shape: [[1, 0], [1, 1]], color: 'color-6' },
@@ -465,47 +506,28 @@
         ];
 
         let currentPieces = [null, null, null];
+        let heldPiece = null;
+        let canHold = true; // Her hamlede sadece 1 kez yedek değişimi yapılabilir
         let activeDrag = null;
 
         // Web Audio Motoru
         let audioCtx = null;
         let ambientTimer = null;
-        let isUserInteracted = false;
 
-        // Mobil Titreşim Motoru Uyumluluğu
-        function initAudioAndVibration() {
-            if (!isUserInteracted) {
-                isUserInteracted = true;
-                // Titreşim iznini ilk dokunuşta aktifleştir
-                if (navigator.vibrate) {
-                    try { navigator.vibrate(10); } catch(e) {}
-                }
-            }
-
+        function initAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                startPianoAmbientMusic();
+                startAmbientMusic();
             }
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
         }
 
-        // Dokunma/Tıklama olaylarında titreşim ve sesi aktif et
-        window.addEventListener('pointerdown', initAudioAndVibration, { once: false });
+        window.addEventListener('pointerdown', initAudio, { once: false });
 
-        function triggerVibration(pattern) {
-            if (vibeEnabled && 'vibrate' in navigator) {
-                try {
-                    navigator.vibrate(pattern);
-                } catch(e) {
-                    console.log("Vibration blocked or unsupported");
-                }
-            }
-        }
-
-        // --- AKUSTİK PİYANO TONLARI ---
-        function playPianoNote(freq, duration = 2.5) {
+        // --- MÜZİK VE SES MOTORU ---
+        function playTone(freq, duration = 2.5) {
             if (!audioCtx || !musicEnabled) return;
 
             const osc = audioCtx.createOscillator();
@@ -525,25 +547,44 @@
             osc.stop(audioCtx.currentTime + duration);
         }
 
-        function startPianoAmbientMusic() {
-            const pianoNotes = [261.63, 329.63, 392.00, 493.88, 523.25];
-            let noteIdx = 0;
+        function startAmbientMusic() {
+            const notes = [261.63, 329.63, 392.00, 493.88, 523.25];
+            let idx = 0;
 
-            function playNextPianoNote() {
-                if (musicEnabled) {
-                    const freq = pianoNotes[noteIdx % pianoNotes.length];
-                    playPianoNote(freq, 2.2);
-                    
-                    if (noteIdx % 3 === 0) {
-                        playPianoNote(freq * 1.25, 2.0);
-                    }
-                    noteIdx++;
+            function nextNote() {
+                if (musicEnabled && audioCtx && audioCtx.state === 'running') {
+                    const freq = notes[idx % notes.length];
+                    playTone(freq, 2.2);
+                    if (idx % 3 === 0) playTone(freq * 1.25, 2.0);
+                    idx++;
                 }
-                ambientTimer = setTimeout(playNextPianoNote, 2500);
+                ambientTimer = setTimeout(nextNote, 2500);
             }
-
-            playNextPianoNote();
+            nextNote();
         }
+
+        // --- OTOMATİK ARKA PLAN DURAKLATMA (AUTO PAUSE) ---
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                pauseGameAndAudio();
+            }
+        });
+
+        window.addEventListener('blur', () => {
+            pauseGameAndAudio();
+        });
+
+        function pauseGameAndAudio() {
+            if (audioCtx && audioCtx.state === 'running') {
+                audioCtx.suspend();
+            }
+        }
+
+        window.addEventListener('focus', () => {
+            if (musicEnabled && audioCtx && audioCtx.state === 'suspended' && !settingsModal.classList.contains('active')) {
+                audioCtx.resume();
+            }
+        });
 
         // --- MENÜ KONTROLLERİ ---
         function syncSettingUI() {
@@ -552,37 +593,30 @@
 
             toggleSfxBtn.textContent = sfxEnabled ? 'AÇIK' : 'KAPALI';
             toggleSfxBtn.className = `toggle-btn ${sfxEnabled ? 'on' : ''}`;
-
-            toggleVibeBtn.textContent = vibeEnabled ? 'AÇIK' : 'KAPALI';
-            toggleVibeBtn.className = `toggle-btn ${vibeEnabled ? 'on' : ''}`;
         }
 
         menuBtn.addEventListener('click', () => {
-            initAudioAndVibration();
+            initAudio();
             settingsModal.classList.add('active');
         });
 
         closeMenuBtn.addEventListener('click', () => {
             settingsModal.classList.remove('active');
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
         });
 
         toggleMusicBtn.addEventListener('click', () => {
             musicEnabled = !musicEnabled;
             localStorage.setItem('bb_music', JSON.stringify(musicEnabled));
             syncSettingUI();
+            if (!musicEnabled && audioCtx) audioCtx.suspend();
+            if (musicEnabled && audioCtx) audioCtx.resume();
         });
 
         toggleSfxBtn.addEventListener('click', () => {
             sfxEnabled = !sfxEnabled;
             localStorage.setItem('bb_sfx', JSON.stringify(sfxEnabled));
             syncSettingUI();
-        });
-
-        toggleVibeBtn.addEventListener('click', () => {
-            vibeEnabled = !vibeEnabled;
-            localStorage.setItem('bb_vibe', JSON.stringify(vibeEnabled));
-            syncSettingUI();
-            if (vibeEnabled) triggerVibration([40, 30, 40]);
         });
 
         restartGameBtn.addEventListener('click', () => {
@@ -648,7 +682,7 @@
             }
         }
 
-        function renderPiece(piece, container, cellSize = 20) {
+        function renderPiece(piece, container, cellSize = 16) {
             container.innerHTML = '';
             if (!piece) return;
             
@@ -677,12 +711,23 @@
                     renderPiece(randomPiece, pieceHolders[i]);
                 }
             }
+            canHold = true;
+            updateHoldUI();
             saveGameState();
             checkGameOver();
         }
 
+        function updateHoldUI() {
+            renderPiece(heldPiece, holdHolder);
+            if (!canHold) {
+                holdHolder.classList.add('disabled');
+            } else {
+                holdHolder.classList.remove('disabled');
+            }
+        }
+
         rerollBtn.addEventListener('click', () => {
-            initAudioAndVibration();
+            initAudio();
             if (coins >= 500) {
                 coins -= 500;
                 localStorage.setItem('block_breaker_coins', coins);
@@ -693,7 +738,6 @@
                     currentPieces[i] = randomPiece;
                     renderPiece(randomPiece, pieceHolders[i]);
                 }
-                triggerVibration(50);
                 saveGameState();
                 checkGameOver();
             }
@@ -705,15 +749,26 @@
         }
 
         function setupDragAndDrop() {
-            pieceHolders.forEach(holder => {
+            document.querySelectorAll('.piece-holder').forEach(holder => {
                 holder.addEventListener('pointerdown', onDragStart, { passive: false });
             });
         }
 
         function onDragStart(e) {
-            initAudioAndVibration();
-            const index = parseInt(e.currentTarget.dataset.index);
-            const piece = currentPieces[index];
+            initAudio();
+            const holder = e.currentTarget;
+            const isHoldType = holder.dataset.type === 'hold';
+            let piece = null;
+            let index = -1;
+
+            if (isHoldType) {
+                if (!heldPiece || !canHold) return;
+                piece = heldPiece;
+            } else {
+                index = parseInt(holder.dataset.index);
+                piece = currentPieces[index];
+            }
+
             if (!piece) return;
 
             if (e.cancelable) e.preventDefault();
@@ -728,6 +783,7 @@
 
             activeDrag = {
                 index: index,
+                isHold: isHoldType,
                 piece: piece,
                 element: clone,
                 cellSize: cellSize
@@ -746,12 +802,25 @@
             const cellSize = activeDrag.cellSize;
             
             const pieceWidth = piece.shape[0].length * cellSize;
-            const pieceHeight = piece.shape.length * cellSize;
 
             activeDrag.element.style.left = `${clientX - pieceWidth / 2}px`;
-            activeDrag.element.style.top = `${clientY - pieceHeight / 2 - 25}px`;
+            activeDrag.element.style.top = `${clientY - (piece.shape.length * cellSize) / 2 - 25}px`;
 
             clearPreview();
+
+            // Yedek kutusu üzeri kontrolü
+            const holdRect = holdHolder.getBoundingClientRect();
+            if (
+                clientX >= holdRect.left && clientX <= holdRect.right &&
+                clientY >= holdRect.top && clientY <= holdRect.bottom
+            ) {
+                if (!activeDrag.isHold && canHold) {
+                    holdHolder.style.backgroundColor = 'rgba(56, 189, 248, 0.3)';
+                }
+                return;
+            } else {
+                holdHolder.style.backgroundColor = '';
+            }
 
             const targetPos = getTargetGridPosition(clientX, clientY);
             if (targetPos) {
@@ -796,16 +865,57 @@
             window.removeEventListener('pointerup', onDragEnd);
             window.removeEventListener('pointercancel', onDragEnd);
 
+            holdHolder.style.backgroundColor = '';
+
+            const holdRect = holdHolder.getBoundingClientRect();
+            let droppedInHold = (
+                e.clientX >= holdRect.left && e.clientX <= holdRect.right &&
+                e.clientY >= holdRect.top && e.clientY <= holdRect.bottom
+            );
+
+            // 1. Şekil Yedekleme Kutusuna Bırakıldıysa
+            if (droppedInHold && !activeDrag.isHold && canHold) {
+                const temp = heldPiece;
+                heldPiece = activeDrag.piece;
+                currentPieces[activeDrag.index] = temp;
+
+                if (temp) {
+                    renderPiece(temp, pieceHolders[activeDrag.index]);
+                } else {
+                    pieceHolders[activeDrag.index].innerHTML = '';
+                }
+
+                canHold = false;
+                updateHoldUI();
+                clearPreview();
+                activeDrag.element.remove();
+                activeDrag = null;
+
+                if (currentPieces.every(p => p === null)) {
+                    spawnPieces();
+                } else {
+                    saveGameState();
+                    checkGameOver();
+                }
+                return;
+            }
+
+            // 2. Şekil Tahtaya Yerleştirildiyse
             const targetPos = getTargetGridPosition(e.clientX, e.clientY);
             let placed = false;
 
-            if (targetPos) {
-                if (canPlace(activeDrag.piece, targetPos.r, targetPos.c)) {
-                    placePiece(activeDrag.piece, targetPos.r, targetPos.c);
+            if (targetPos && canPlace(activeDrag.piece, targetPos.r, targetPos.c)) {
+                placePiece(activeDrag.piece, targetPos.r, targetPos.c);
+                
+                if (activeDrag.isHold) {
+                    heldPiece = null;
+                    canHold = false;
+                    updateHoldUI();
+                } else {
                     currentPieces[activeDrag.index] = null;
                     pieceHolders[activeDrag.index].innerHTML = '';
-                    placed = true;
                 }
+                placed = true;
             }
 
             clearPreview();
@@ -814,7 +924,6 @@
 
             if (placed) {
                 playPlaceSound();
-                triggerVibration(40); // Yerleştirme Titreşimi
                 checkLines();
                 if (currentPieces.every(p => p === null)) {
                     spawnPieces();
@@ -901,13 +1010,13 @@
 
             const fireworkColors = ['#f59e0b', '#38bdf8', '#ec4899', '#10b981', '#ffffff'];
 
-            const sparkCount = 12;
+            const sparkCount = 10;
             for (let i = 0; i < sparkCount; i++) {
                 const spark = document.createElement('div');
                 spark.classList.add('spark');
                 
                 const angle = (Math.PI * 2 / sparkCount) * i;
-                const distance = 30 + Math.random() * 25;
+                const distance = 25 + Math.random() * 20;
                 const tx = Math.cos(angle) * distance;
                 const ty = Math.sin(angle) * distance;
 
@@ -953,7 +1062,6 @@
             const totalCleared = rowsToClear.length + colsToClear.length;
             if (totalCleared > 0) {
                 playExplosionSound();
-                triggerVibration([60, 40, 80]); // Çift Vuruş Güçlü Patlama Titreşimi
 
                 let clearSet = new Set();
                 rowsToClear.forEach(r => {
@@ -1016,23 +1124,24 @@
 
         function checkGameOver() {
             let canMove = false;
-            for (let i = 0; i < 3; i++) {
-                const piece = currentPieces[i];
-                if (piece) {
-                    for (let r = 0; r < BOARD_SIZE; r++) {
-                        for (let c = 0; c < BOARD_SIZE; c++) {
-                            if (canPlace(piece, r, c)) {
-                                canMove = true;
-                                break;
-                            }
+
+            // Hem normal yuvalardaki hem de yedekteki şekilleri kontrol et
+            const allAvailablePieces = [...currentPieces, heldPiece].filter(p => p !== null);
+
+            for (let piece of allAvailablePieces) {
+                for (let r = 0; r < BOARD_SIZE; r++) {
+                    for (let c = 0; c < BOARD_SIZE; c++) {
+                        if (canPlace(piece, r, c)) {
+                            canMove = true;
+                            break;
                         }
-                        if (canMove) break;
                     }
+                    if (canMove) break;
                 }
                 if (canMove) break;
             }
 
-            if (!canMove && currentPieces.some(p => p !== null)) {
+            if (!canMove && allAvailablePieces.length > 0) {
                 setTimeout(() => {
                     finalScoreElement.textContent = score;
                     modalBestScoreElement.textContent = bestScore;
@@ -1047,6 +1156,8 @@
                 gridColors: gridColors,
                 score: score,
                 currentPieces: currentPieces,
+                heldPiece: heldPiece,
+                canHold: canHold,
                 lastCoinThreshold: lastCoinThreshold
             };
             localStorage.setItem('block_breaker_saved_state', JSON.stringify(state));
@@ -1061,6 +1172,8 @@
                     gridColors = state.gridColors;
                     score = state.score;
                     currentPieces = state.currentPieces;
+                    heldPiece = state.heldPiece || null;
+                    canHold = state.canHold ?? true;
                     lastCoinThreshold = state.lastCoinThreshold || 0;
 
                     scoreElement.textContent = score;
@@ -1079,6 +1192,8 @@
                             renderPiece(currentPieces[i], pieceHolders[i]);
                         }
                     }
+
+                    updateHoldUI();
                     return true;
                 } catch(e) {
                     return false;
@@ -1091,10 +1206,13 @@
             grid = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
             gridColors = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
             currentPieces = [null, null, null];
+            heldPiece = null;
+            canHold = true;
             lastCoinThreshold = 0;
 
             updateScore(0);
             createBoard();
+            updateHoldUI();
             spawnPieces();
             saveGameState();
         }
