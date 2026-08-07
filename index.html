@@ -85,15 +85,15 @@
         .cell {
             background-color: #334155;
             border-radius: 4px;
-            transition: background-color 0.1s ease, transform 0.1s ease;
+            transition: background-color 0.05s ease, transform 0.05s ease;
             position: relative;
         }
         .cell.filled {
             box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.8), 0 0 12px currentColor;
         }
         .cell.preview {
-            opacity: 0.5;
-            transform: scale(0.92);
+            opacity: 0.6;
+            transform: scale(0.95);
             box-shadow: inset 0 0 6px #fff;
         }
         .bottom-panel {
@@ -122,6 +122,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            touch-action: none;
         }
         .piece-grid {
             display: grid;
@@ -135,8 +136,9 @@
             position: fixed;
             pointer-events: none;
             z-index: 1000;
-            opacity: 0.9;
-            filter: drop-shadow(0 12px 24px rgba(0,0,0,0.7));
+            opacity: 0.85;
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.6));
+            will-change: transform, left, top;
         }
 
         /* Power-Up / Reroll Butonu */
@@ -176,7 +178,7 @@
         .color-6 { background-color: #ec4899; color: #ec4899; }
         .color-7 { background-color: #06b6d4; color: #06b6d4; }
 
-        /* Patlama ve Kıvılcım Efektleri */
+        /* Efektler */
         .spark {
             position: absolute;
             width: 6px;
@@ -188,14 +190,8 @@
         }
 
         @keyframes sparkFly {
-            0% {
-                transform: translate(0, 0) scale(1.5);
-                opacity: 1;
-            }
-            100% {
-                transform: translate(var(--tx), var(--ty)) scale(0);
-                opacity: 0;
-            }
+            0% { transform: translate(0, 0) scale(1.5); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
         }
 
         @keyframes cellFlash {
@@ -251,7 +247,7 @@
         let score = 0;
         let coins = parseInt(localStorage.getItem('block_breaker_coins')) || 0;
         let bestScore = parseInt(localStorage.getItem('block_breaker_best')) || 0;
-        let lastCoinThreshold = 0; // Her 5000 puan takibi için
+        let lastCoinThreshold = 0;
         
         const gridElement = document.getElementById('grid');
         const scoreElement = document.getElementById('score');
@@ -387,7 +383,6 @@
             checkGameOver();
         }
 
-        // Reroll (Şekil Değiştirme) Fonksiyonu
         rerollBtn.addEventListener('click', () => {
             initAudio();
             if (coins >= 500) {
@@ -395,7 +390,6 @@
                 localStorage.setItem('block_breaker_coins', coins);
                 updateCoinsDisplay();
 
-                // Tüm parçaları yenile
                 for (let i = 0; i < 3; i++) {
                     const randomPiece = PIECES[Math.floor(Math.random() * PIECES.length)];
                     currentPieces[i] = randomPiece;
@@ -412,7 +406,7 @@
 
         function setupDragAndDrop() {
             pieceHolders.forEach(holder => {
-                holder.addEventListener('pointerdown', onDragStart);
+                holder.addEventListener('pointerdown', onDragStart, { passive: false });
             });
         }
 
@@ -422,7 +416,7 @@
             const piece = currentPieces[index];
             if (!piece) return;
 
-            e.preventDefault();
+            if (e.cancelable) e.preventDefault();
 
             const clone = document.createElement('div');
             clone.classList.add('dragging');
@@ -441,7 +435,7 @@
 
             updateDragPosition(e.clientX, e.clientY);
 
-            window.addEventListener('pointermove', onDragMove);
+            window.addEventListener('pointermove', onDragMove, { passive: false });
             window.addEventListener('pointerup', onDragEnd);
             window.addEventListener('pointercancel', onDragEnd);
         }
@@ -454,8 +448,9 @@
             const pieceWidth = piece.shape[0].length * cellSize;
             const pieceHeight = piece.shape.length * cellSize;
 
+            // Parmak tam parçanın üst-orta noktasında kalarak görüşü engellemez
             activeDrag.element.style.left = `${clientX - pieceWidth / 2}px`;
-            activeDrag.element.style.top = `${clientY - pieceHeight / 2}px`;
+            activeDrag.element.style.top = `${clientY - pieceHeight / 2 - 20}px`;
 
             clearPreview();
 
@@ -468,28 +463,36 @@
         }
 
         function onDragMove(e) {
+            if (e.cancelable) e.preventDefault();
             updateDragPosition(e.clientX, e.clientY);
         }
 
+        // Hassas ve Hızlı Kare Algılama Mantığı
         function getTargetGridPosition(clientX, clientY) {
             const boardRect = gridElement.getBoundingClientRect();
-            
+            const cellSize = (boardRect.width - 16) / BOARD_SIZE; // Gap ve Padding hesabı
+
+            // Parmak izinin biraz yukarısı hizalanır (daha rahat görünüm için)
+            const adjustedY = clientY - 20;
+
+            // Görsel olarak karelaj sınırı içinde mi? (1 kare esneklik payı eklendi)
             if (
-                clientX >= boardRect.left &&
-                clientX <= boardRect.right &&
-                clientY >= boardRect.top &&
-                clientY <= boardRect.bottom
+                clientX >= boardRect.left - cellSize &&
+                clientX <= boardRect.right + cellSize &&
+                adjustedY >= boardRect.top - cellSize &&
+                adjustedY <= boardRect.bottom + cellSize
             ) {
-                const cellSize = boardRect.width / BOARD_SIZE;
                 const piece = activeDrag.piece;
 
-                let centerCol = Math.floor((clientX - boardRect.left) / cellSize);
-                let centerRow = Math.floor((clientY - boardRect.top) / cellSize);
+                // Parmağın tahta üzerindeki bağıl konumu
+                const relativeX = clientX - boardRect.left - 8;
+                const relativeY = adjustedY - boardRect.top - 8;
 
-                let startR = centerRow - Math.floor((piece.shape.length - 1) / 2);
-                let startC = centerCol - Math.floor((piece.shape[0].length - 1) / 2);
+                // Anında kareye yapışması için en yakın hücreye yuvarla
+                let col = Math.round((relativeX - (piece.shape[0].length * cellSize) / 2) / cellSize);
+                let row = Math.round((relativeY - (piece.shape.length * cellSize) / 2) / cellSize);
 
-                return { r: startR, c: startC };
+                return { r: row, c: col };
             }
             return null;
         }
@@ -694,7 +697,6 @@
             score = newScore;
             scoreElement.textContent = score;
 
-            // Her 5000 Puanda 1000 Coin Ödülü Ver
             const currentThreshold = Math.floor(score / 5000);
             if (currentThreshold > lastCoinThreshold) {
                 const earnedCoins = (currentThreshold - lastCoinThreshold) * 1000;
