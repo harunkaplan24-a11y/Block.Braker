@@ -24,8 +24,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
+      - name: Setup Android SDK & Build Tools
         uses: android-actions/setup-android@v3
+
+      - name: Install Android Build-Tools 33.0.2
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2" "platforms;android-33"
 
       - name: Install Cordova & Gradle
         run: |
@@ -34,7 +38,7 @@ jobs:
 
       - name: Create & Configure Cordova Project
         run: |
-          cordova create cordova_app com.blockbreaker.game "Block Breaker"
+          cordova create cordova_app com.blockbreaker.game BlockBreaker
           rm -rf cordova_app/www/*
           cp index.html cordova_app/www/
           if [ -f config.xml ]; then cp config.xml cordova_app/; fi
@@ -42,7 +46,7 @@ jobs:
           cd cordova_app
           cordova platform add android@12.0.0
           
-          # Gradle sürümünü XmlParser'ı destekleyen kararlı 7.6.4 sürümüne sabitliyoruz
+          # Gradle sürümünü 7.6.4'e sabitliyoruz
           cd platforms/android
           gradle wrapper --gradle-version 7.6.4
 
