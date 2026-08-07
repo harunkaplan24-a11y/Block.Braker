@@ -31,10 +31,16 @@ jobs:
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2" "platforms;android-33"
 
+      - name: Setup Gradle 7.6.4 (Overrides Gradle 9)
+        run: |
+          wget https://services.gradle.org/distributions/gradle-7.6.4-bin.zip
+          unzip -q gradle-7.6.4-bin.zip
+          echo "$PWD/gradle-7.6.4/bin" >> $GITHUB_PATH
+
       - name: Install Cordova
         run: npm install -g cordova@12.0.0
 
-      - name: Prepare Cordova Project
+      - name: Create Cordova Project
         run: |
           cordova create cordova_app com.blockbreaker.game BlockBreaker
           rm -rf cordova_app/www/*
@@ -44,11 +50,10 @@ jobs:
           cd cordova_app
           cordova platform add android@12.0.0
 
-      - name: Build APK via Gradle Wrapper
+      - name: Build APK
         run: |
-          cd cordova_app/platforms/android
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          cd cordova_app
+          cordova build android --debug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
