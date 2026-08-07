@@ -24,19 +24,17 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK & Build Tools
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
       - name: Install Android Build-Tools 33.0.2
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2" "platforms;android-33"
 
-      - name: Install Cordova & Gradle
-        run: |
-          npm install -g cordova
-          sudo apt-get update && sudo apt-get install -y gradle
+      - name: Install Cordova
+        run: npm install -g cordova@12.0.0
 
-      - name: Create & Configure Cordova Project
+      - name: Create Cordova Project
         run: |
           cordova create cordova_app com.blockbreaker.game BlockBreaker
           rm -rf cordova_app/www/*
@@ -45,12 +43,10 @@ jobs:
           if [ -f icon.png ]; then cp icon.png cordova_app/www/; fi
           cd cordova_app
           cordova platform add android@12.0.0
-          
-          # Gradle sürümünü 7.6.4'e sabitliyoruz
-          cd platforms/android
-          gradle wrapper --gradle-version 7.6.4
 
       - name: Build APK
+        env:
+          CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: "https://services.gradle.org/distributions/gradle-7.5.1-all.zip"
         run: |
           cd cordova_app
           cordova build android --debug
