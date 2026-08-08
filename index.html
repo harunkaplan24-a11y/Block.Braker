@@ -402,6 +402,23 @@
             margin-top: 8px;
         }
 
+        .difficulty-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: transform 0.1s, filter 0.2s;
+            color: #ffffff;
+        }
+        .difficulty-btn:active { transform: scale(0.96); }
+        .btn-easy { background: #059669; }
+        .btn-medium { background: #d97706; }
+        .btn-hard { background: #dc2626; }
+
         .level-up-container {
             position: fixed;
             inset: 0;
@@ -419,15 +436,15 @@
             width: 120px;
             height: 2px;
             background: linear-gradient(90deg, #facc15, transparent);
-            animation: shootStar 1.2s ease-out forwards;
+            animation: shootStarUp 1.2s ease-out forwards;
             filter: drop-shadow(0 0 8px #facc15);
             opacity: 0;
         }
 
-        @keyframes shootStar {
-            0% { transform: translate(0, 0) rotate(-35deg) scaleX(0); opacity: 1; }
+        @keyframes shootStarUp {
+            0% { transform: translate(0, 200px) rotate(-55deg) scaleX(0); opacity: 1; }
             50% { opacity: 1; }
-            100% { transform: translate(-600px, 600px) rotate(-35deg) scaleX(1.8); opacity: 0; }
+            100% { transform: translate(300px, -600px) rotate(-55deg) scaleX(1.8); opacity: 0; }
         }
 
         .level-up-text {
@@ -475,8 +492,8 @@
             <span id="score" class="score-value">0</span>
         </div>
         <div class="score-container" style="align-items: center;">
-            <span class="score-label">Level</span>
-            <span id="level" class="level-value">1</span>
+            <span class="score-label">Zorluk</span>
+            <span id="difficulty-badge" class="level-value" style="font-size: 15px; color: #38bdf8;">Orta</span>
         </div>
         <div class="score-container" style="align-items: center;">
             <span class="score-label">Coin</span>
@@ -558,6 +575,17 @@
 
     <div id="level-overlay" class="level-up-container"></div>
 
+    <!-- Zorluk Seçim Modalı (İlk Açılış ve Yeniden Başlatma) -->
+    <div id="difficulty-modal" class="modal-overlay active">
+        <div class="modal-card">
+            <h2 class="modal-title">Zorluk Seç</h2>
+            <div style="font-size: 13px; color: #94a3b8; margin-bottom: 20px;">Nasıl bir deneyim istersin?</div>
+            <button class="difficulty-btn btn-easy" data-diff="easy">🟢 Kolay (Çocuk Oyunu)</button>
+            <button class="difficulty-btn btn-medium" data-diff="medium">🟡 Orta (Dengeli)</button>
+            <button class="difficulty-btn btn-hard" data-diff="hard">🔴 Zor (Usta İşi)</button>
+        </div>
+    </div>
+
     <div id="settings-modal" class="modal-overlay">
         <div class="modal-card">
             <h2 class="modal-title" id="menu-title">Ayarlar</h2>
@@ -598,7 +626,7 @@
         let gridColors = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
         let score = 0;
         let coins = 0;
-        let currentLevel = 1;
+        let gameDifficulty = localStorage.getItem('bb_difficulty') || 'medium'; // easy, medium, hard
         let bestScore = parseInt(localStorage.getItem('block_breaker_best')) || 0;
         let lastCoinThreshold = 0;
         let lastBananaThreshold = 0;
@@ -613,7 +641,7 @@
         const gridElement = document.getElementById('grid');
         const scoreElement = document.getElementById('score');
         const timerElement = document.getElementById('timer');
-        const levelElement = document.getElementById('level');
+        const difficultyBadge = document.getElementById('difficulty-badge');
         const coinsElement = document.getElementById('coins');
         const bestScoreElement = document.getElementById('best-score');
         const comboElement = document.getElementById('combo');
@@ -624,6 +652,7 @@
         const levelOverlay = document.getElementById('level-overlay');
         const orangutanSvg = document.getElementById('orangutan-svg');
         
+        const difficultyModal = document.getElementById('difficulty-modal');
         const settingsModal = document.getElementById('settings-modal');
         const menuTitle = document.getElementById('menu-title');
         const toggleMusicBtn = document.getElementById('toggle-music');
@@ -640,30 +669,41 @@
         bestScoreElement.textContent = bestScore;
         updateCoinsDisplay();
         syncSettingUI();
+        updateDifficultyUI();
 
         const ALL_COLORS = ['color-1', 'color-2', 'color-3', 'color-4', 'color-5', 'color-6', 'color-7', 'color-8'];
 
-        const PIECES_EASY = [
-            { shape: [[1, 1]], color: 'color-2' },
-            { shape: [[1], [1]], color: 'color-2' },
-            { shape: [[1, 1, 1]], color: 'color-3' },
-            { shape: [[1], [1], [1]], color: 'color-3' },
-            { shape: [[1, 1], [1, 1]], color: 'color-4' },
-            { shape: [[1, 0], [1, 1]], color: 'color-6' }
+        // Şekil Havuzları
+        const EASY_POOL = [
+            { shape: [[1]], color: 'color-2' },
+            { shape: [[1, 1]], color: 'color-3' },
+            { shape: [[1], [1]], color: 'color-3' },
+            { shape: [[1, 1, 1]], color: 'color-4' },
+            { shape: [[1], [1], [1]], color: 'color-4' },
+            { shape: [[1, 1], [1, 1]], color: 'color-5' },
+            { shape: [[1, 0], [1, 1]], color: 'color-6' },
+            { shape: [[0, 1], [1, 1]], color: 'color-7' }
         ];
 
-        const PIECES_MEDIUM = [
+        const MEDIUM_POOL = [
             { shape: [[1, 1, 1, 1]], color: 'color-8' },
             { shape: [[1], [1], [1], [1]], color: 'color-8' },
             { shape: [[1, 1, 1], [1, 0, 0]], color: 'color-1' },
             { shape: [[1, 1, 1], [0, 0, 1]], color: 'color-5' },
-            { shape: [[1, 1, 1], [0, 1, 0]], color: 'color-7' }
+            { shape: [[1, 1, 1], [0, 1, 0]], color: 'color-7' },
+            { shape: [[1, 1], [1, 0], [1, 0]], color: 'color-2' },
+            { shape: [[1, 1, 1, 1, 1]], color: 'color-3' },
+            { shape: [[1], [1], [1], [1], [1]], color: 'color-3' }
         ];
 
-        const PIECES_HARD = [
+        const HARD_POOL = [
             { shape: [[1, 1, 1, 1, 1]], color: 'color-7' },
             { shape: [[1], [1], [1], [1], [1]], color: 'color-7' },
-            { shape: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: 'color-5' }
+            { shape: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: 'color-5' },
+            { shape: [[1, 1, 1, 1], [1, 1, 1, 1]], color: 'color-1' },
+            { shape: [[1, 1, 1], [1, 0, 1], [1, 1, 1]], color: 'color-6' },
+            { shape: [[1, 0, 0], [1, 0, 0], [1, 1, 1]], color: 'color-4' },
+            { shape: [[0, 0, 1], [0, 0, 1], [1, 1, 1]], color: 'color-2' }
         ];
 
         let currentPieces = [null, null, null];
@@ -674,13 +714,19 @@
         let audioCtx = null;
         let ambientTimer = null;
 
+        function updateDifficultyUI() {
+            if (gameDifficulty === 'easy') difficultyBadge.textContent = 'Kolay';
+            else if (gameDifficulty === 'medium') difficultyBadge.textContent = 'Orta';
+            else difficultyBadge.textContent = 'Zor';
+        }
+
         function saveGameState() {
             const state = {
                 grid,
                 gridColors,
                 score,
                 coins,
-                currentLevel,
+                gameDifficulty,
                 totalSeconds,
                 lastCoinThreshold,
                 lastBananaThreshold,
@@ -705,7 +751,7 @@
                 gridColors = state.gridColors;
                 score = state.score;
                 coins = state.coins;
-                currentLevel = state.currentLevel;
+                gameDifficulty = state.gameDifficulty || 'medium';
                 totalSeconds = state.totalSeconds;
                 lastCoinThreshold = state.lastCoinThreshold;
                 lastBananaThreshold = state.lastBananaThreshold;
@@ -714,7 +760,7 @@
                 canHold = state.canHold;
 
                 scoreElement.textContent = score;
-                levelElement.textContent = currentLevel;
+                updateDifficultyUI();
                 updateCoinsDisplay();
                 updateTimerDisplay();
                 renderGrid();
@@ -739,7 +785,7 @@
         function startTimer() {
             if (gameTimerInterval) clearInterval(gameTimerInterval);
             gameTimerInterval = setInterval(() => {
-                if (!isPaused) {
+                if (!isPaused && !difficultyModal.classList.contains('active')) {
                     totalSeconds++;
                     updateTimerDisplay();
                     saveGameState();
@@ -765,7 +811,7 @@
         window.addEventListener('pointerdown', initAudio, { once: false });
 
         document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
+            if (document.hidden && !difficultyModal.classList.contains('active')) {
                 pauseGame();
             }
         });
@@ -857,12 +903,23 @@
 
         restartGameBtn.addEventListener('click', () => {
             resumeGame();
-            resetGame();
+            settingsModal.classList.remove('active');
+            difficultyModal.classList.add('active');
         });
 
         modalRestartBtn.addEventListener('click', () => {
             gameOverModal.classList.remove('active');
-            resetGame();
+            difficultyModal.classList.add('active');
+        });
+
+        document.querySelectorAll('.difficulty-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                gameDifficulty = e.target.dataset.diff;
+                localStorage.setItem('bb_difficulty', gameDifficulty);
+                difficultyModal.classList.remove('active');
+                updateDifficultyUI();
+                resetGame();
+            });
         });
 
         function playPlaceSound() {
@@ -952,8 +1009,15 @@
         }
 
         function getRandomPiece() {
-            let pool = [...PIECES_EASY, ...PIECES_MEDIUM];
-            if (score > 1000) pool = [...pool, ...PIECES_HARD];
+            let pool;
+            if (gameDifficulty === 'easy') {
+                pool = EASY_POOL;
+            } else if (gameDifficulty === 'medium') {
+                pool = [...EASY_POOL, ...MEDIUM_POOL];
+            } else {
+                // Zor mod
+                pool = [...MEDIUM_POOL, ...HARD_POOL];
+            }
             const piece = pool[Math.floor(Math.random() * pool.length)];
             return JSON.parse(JSON.stringify(piece));
         }
@@ -1071,7 +1135,7 @@
                             createSparks(targetCell);
                             playExplosionSound();
                             renderGrid();
-                            addScore(10);
+                            addScore(50);
                         }
                     }, 600);
 
@@ -1084,7 +1148,7 @@
 
             allHolders.forEach(holder => {
                 holder.addEventListener('pointerdown', (e) => {
-                    if (isPaused) return;
+                    if (isPaused || difficultyModal.classList.contains('active')) return;
                     const type = holder.dataset.type;
                     const index = holder.dataset.index;
 
@@ -1257,11 +1321,12 @@
 
         function isPointerOverHold(e) {
             const rect = holdHolder.getBoundingClientRect();
+            const padding = 20;
             return (
-                e.clientX >= rect.left &&
-                e.clientX <= rect.right &&
-                e.clientY >= rect.top &&
-                e.clientY <= rect.bottom
+                e.clientX >= rect.left - padding &&
+                e.clientX <= rect.right + padding &&
+                e.clientY >= rect.top - padding &&
+                e.clientY <= rect.bottom + padding
             );
         }
 
@@ -1299,7 +1364,6 @@
                     }
                 }
 
-                // Şekli koyunca bloka karşılık gelen temel puanı ver
                 addScore(blockCount);
 
                 playPlaceSound();
@@ -1420,13 +1484,6 @@
                 localStorage.setItem('block_breaker_best', bestScore);
             }
 
-            const newLevel = Math.floor(score / 2500) + 1;
-            if (newLevel > currentLevel) {
-                currentLevel = newLevel;
-                levelElement.textContent = currentLevel;
-                triggerLevelUpAnimation();
-            }
-
             if (Math.floor(score / 100) > lastCoinThreshold) {
                 const diff = Math.floor(score / 100) - lastCoinThreshold;
                 coins += diff * 10;
@@ -1434,8 +1491,8 @@
                 updateCoinsDisplay();
             }
 
-            if (Math.floor(score / 1500) > lastBananaThreshold) {
-                lastBananaThreshold = Math.floor(score / 1500);
+            if (Math.floor(score / 3000) > lastBananaThreshold) {
+                lastBananaThreshold = Math.floor(score / 3000);
                 triggerBananaEffect();
             }
 
@@ -1447,22 +1504,22 @@
             rerollBtn.disabled = coins < 500;
         }
 
-        function triggerLevelUpAnimation(customLevelText) {
+        function triggerLevelUpAnimation(customText) {
             playStarSparkleSound();
             levelOverlay.innerHTML = '';
 
             for (let i = 0; i < 18; i++) {
                 const star = document.createElement('div');
                 star.className = 'shooting-star';
-                star.style.top = `${Math.random() * 80}%`;
-                star.style.right = `${Math.random() * 40 - 20}%`;
+                star.style.bottom = `${Math.random() * 20}%`;
+                star.style.left = `${Math.random() * 100}%`;
                 star.style.animationDelay = `${Math.random() * 0.8}s`;
                 levelOverlay.appendChild(star);
             }
 
             const text = document.createElement('div');
             text.className = 'level-up-text';
-            text.textContent = customLevelText || `LEVEL ${currentLevel}!`;
+            text.textContent = customText || 'BAŞLAYALIM!';
             levelOverlay.appendChild(text);
 
             setTimeout(() => {
@@ -1516,12 +1573,10 @@
             gridColors = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
             score = 0;
             coins = 0;
-            currentLevel = 1;
             totalSeconds = 0;
             lastCoinThreshold = 0;
             lastBananaThreshold = 0;
             scoreElement.textContent = 0;
-            levelElement.textContent = 1;
             updateCoinsDisplay();
             heldPiece = null;
             canHold = true;
@@ -1529,14 +1584,17 @@
             startTimer();
             renderGrid();
             generateNewPieces();
-            triggerLevelUpAnimation("LEVEL 1!");
+            triggerLevelUpAnimation(gameDifficulty === 'easy' ? 'KOLAY MOD' : gameDifficulty === 'medium' ? 'ORTA MOD' : 'ZOR MOD');
             saveGameState();
         }
 
         function initGame() {
             createGrid();
             if (!loadGameState()) {
-                resetGame();
+                // Kayıt yoksa zorluk seçimi zaten aktif, zamanlayıcıyı bekletelim
+                stopTimer();
+            } else {
+                difficultyModal.classList.remove('active');
             }
             setupDragAndDrop();
         }
