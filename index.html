@@ -2,770 +2,646 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Block Breaker</title>
-
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230f172a'/><rect x='15' y='15' width='32' height='32' rx='6' fill='%2338bdf8'/><rect x='53' y='15' width='32' height='32' rx='6' fill='%23f59e0b'/><rect x='15' y='53' width='32' height='32' rx='6' fill='%23ec4899'/></svg>">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Block Breaker - Orman Macerası</title>
     <style>
         * {
             box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
-            touch-action: none;
+            -webkit-touch-callout: none;
         }
+
         body {
             margin: 0;
             padding: 0;
-            background-color: #0f172a;
-            color: #f8fafc;
+            background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-start;
             min-height: 100vh;
             overflow: hidden;
+            touch-action: none;
         }
-        header {
+
+        .game-container {
             width: 100%;
-            max-width: 450px;
-            padding: 15px 20px 5px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-        .score-container {
+            max-width: 420px;
+            height: 100vh;
+            max-height: 900px;
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
+            padding: 10px 15px;
+            position: relative;
         }
-        .score-label {
-            font-size: 11px;
+
+        /* Üst Bilgi Paneli */
+        .header-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px 12px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-size: 10px;
             color: #94a3b8;
             text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .score-value {
-            font-size: 24px;
-            font-weight: 800;
-            color: #38bdf8;
-            margin-top: 2px;
-        }
-        .level-value {
-            font-size: 22px;
-            font-weight: bold;
-            color: #a855f7;
-            margin-top: 2px;
-        }
-        .coin-value {
-            font-size: 22px;
-            font-weight: bold;
-            color: #f59e0b;
-            margin-top: 2px;
-        }
-        .time-value {
-            font-size: 22px;
-            font-weight: 800;
-            color: #10b981;
-            margin-top: 2px;
             letter-spacing: 0.5px;
         }
 
-        .top-controls {
-            width: 100%;
-            max-width: 450px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px 0 20px;
-        }
-
-        .icon-btn {
-            background: rgba(30, 41, 59, 0.8);
-            border: 1px solid #334155;
-            color: #cbd5e1;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: background 0.2s;
-        }
-        .icon-btn:active { background: #334155; }
-
-        .combo-badge {
-            font-size: 13px;
+        .stat-value {
+            font-size: 16px;
             font-weight: bold;
-            color: #f43f5e;
-            height: 20px;
-            transition: opacity 0.3s;
-            opacity: 0;
-            margin-top: 5px;
+            color: #f8fafc;
         }
 
-        .orangutan-stage {
-            position: absolute;
-            top: -75px;
-            left: 50%;
-            transform: translateX(-50%);
+        .menu-btn {
+            background: #059669;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 6px 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: transform 0.1s ease;
+        }
+
+        .menu-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Maymun ve Oyun Alanı */
+        .board-area {
+            position: relative;
             display: flex;
+            flex-direction: column;
             align-items: center;
+            flex-grow: 1;
             justify-content: center;
+        }
+
+        .orangutan-container {
+            position: absolute;
+            top: -45px;
             z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             pointer-events: none;
         }
 
         .orangutan-svg {
             width: 80px;
             height: 80px;
-            filter: drop-shadow(0 6px 10px rgba(0,0,0,0.5));
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+            transition: transform 0.2s ease;
         }
 
-        .arm-left-group {
-            transform-origin: 30px 55px;
-            transition: transform 0.2s ease-out;
+        .arms-move {
+            animation: armMove 0.4s ease infinite alternate;
         }
-        .arm-right-group {
-            transform-origin: 70px 55px;
-            transition: transform 0.2s ease-out;
+        .arms-celebrate {
+            animation: celebrateAnim 0.5s ease;
         }
-
-        .arms-move .arm-left-group { animation: armMoveLeft 0.35s ease-in-out; }
-        .arms-move .arm-right-group { animation: armMoveRight 0.35s ease-in-out; }
-
-        @keyframes armMoveLeft {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(-25deg); }
-        }
-        @keyframes armMoveRight {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(25deg); }
+        .arms-throw {
+            animation: throwAnim 0.4s ease;
         }
 
-        .arms-celebrate .arm-left-group { animation: armCelebrateLeft 0.6s ease-in-out 2; }
-        .arms-celebrate .arm-right-group { animation: armCelebrateRight 0.6s ease-in-out 2; }
-
-        @keyframes armCelebrateLeft {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(-120deg); }
+        @keyframes armMove {
+            0% { transform: rotate(-3deg) scale(1); }
+            100% { transform: rotate(3deg) scale(1.05); }
         }
-        @keyframes armCelebrateRight {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(120deg); }
+        @keyframes celebrateAnim {
+            0% { transform: scale(1) translateY(0); }
+            50% { transform: scale(1.15) translateY(-10px); }
+            100% { transform: scale(1) translateY(0); }
         }
-
-        .arms-throw .arm-right-group { animation: armThrowRight 0.5s ease-in-out; }
-
-        @keyframes armThrowRight {
-            0% { transform: rotate(0deg); }
-            30% { transform: rotate(-60deg); }
-            60% { transform: rotate(90deg); }
-            100% { transform: rotate(0deg); }
+        @keyframes throwAnim {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.9) translateY(5px); }
+            100% { transform: scale(1); }
         }
 
-        .flying-banana {
-            position: fixed;
-            font-size: 38px;
-            pointer-events: none;
-            z-index: 1500;
-            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.6));
-            transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s ease-in;
-        }
-
-        .game-board-wrapper {
-            position: relative;
-            width: 100%;
-            max-width: 420px;
-            padding: 10px;
-            margin-top: 45px;
-        }
-        #grid {
+        .grid {
             display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            grid-template-rows: repeat(10, 1fr);
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
             gap: 4px;
-            background-color: #1e293b;
-            border-radius: 12px;
+            background: rgba(2, 44, 34, 0.8);
             padding: 8px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-            aspect-ratio: 1 / 1;
-            width: 100%;
-            position: relative;
+            border-radius: 12px;
+            border: 2px solid rgba(52, 211, 153, 0.3);
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.5), 0 10px 20px rgba(0,0,0,0.3);
+            width: 340px;
+            height: 340px;
         }
+
         .cell {
-            background-color: #334155;
-            border-radius: 4px;
-            transition: background-color 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
-            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            transition: background 0.1s ease, transform 0.1s ease;
         }
 
-        .cell.filled { box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.25); }
-        .cell.preview { opacity: 0.5; transform: scale(0.95); }
+        .cell.filled {
+            border-radius: 6px;
+            box-shadow: inset 0 -3px 0 rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2);
+        }
 
+        .cell.preview {
+            opacity: 0.6;
+            transform: scale(0.95);
+        }
+
+        /* Renk Paleti */
+        .color-1 { background: #e11d48 !important; }
+        .color-2 { background: #2563eb !important; }
+        .color-3 { background: #059669 !important; }
+        .color-4 { background: #d97706 !important; }
+        .color-5 { background: #7c3aed !important; }
+        .color-6 { background: #db2777 !important; }
+        .color-7 { background: #0891b2 !important; }
+        .color-8 { background: #9333ea !important; }
+
+        /* Alt Seçim Paneli ve Hold Alanı */
         .bottom-panel {
-            width: 100%;
-            max-width: 420px;
-            background-color: #1e293b;
-            border-top-left-radius: 20px;
-            border-top-right-radius: 20px;
-            padding: 10px 10px 15px 10px;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
             display: flex;
             flex-direction: column;
-            align-items: center;
             gap: 10px;
+            padding-bottom: 10px;
         }
-        .pieces-area {
-            width: 100%;
+
+        .tools-bar {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            gap: 5px;
-        }
-        .hold-section {
-            display: flex;
-            flex-direction: column;
             align-items: center;
-            padding-right: 8px;
-            border-right: 2px dashed #334155;
+            background: rgba(0,0,0,0.3);
+            padding: 6px 12px;
+            border-radius: 10px;
         }
-        .hold-title {
+
+        .hold-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0,0,0,0.4);
+            padding: 4px 10px;
+            border-radius: 8px;
+            border: 1px dashed rgba(255,255,255,0.2);
+            min-width: 80px;
+            height: 50px;
+            cursor: pointer;
+        }
+
+        .hold-container.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .hold-label {
             font-size: 10px;
             color: #94a3b8;
             text-transform: uppercase;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-        .pieces-container {
-            flex: 1;
-            height: 100px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-        }
-        .piece-holder {
-            width: 75px;
-            height: 75px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            touch-action: none;
-            background: rgba(15, 23, 42, 0.3);
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.05);
-            position: relative;
-        }
-        .piece-holder.hold-box {
-            border: 2px dashed #38bdf8;
-            background: rgba(56, 189, 248, 0.05);
-        }
-        .piece-holder.disabled { opacity: 0.4; pointer-events: none; }
-        .piece-grid { display: grid; gap: 2px; }
-        .piece-block { border-radius: 3px; box-shadow: inset 0 -1px 0 rgba(0,0,0,0.2); }
-        
-        .dragging {
-            position: fixed;
-            pointer-events: none;
-            z-index: 1000;
-            opacity: 0.95;
-            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
-            will-change: transform, left, top;
         }
 
         .reroll-btn {
             background: #d97706;
-            color: #ffffff;
             border: none;
-            border-radius: 10px;
-            padding: 10px 20px;
-            font-size: 14px;
+            border-radius: 8px;
+            color: white;
+            padding: 8px 12px;
             font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: transform 0.1s, opacity 0.2s;
-            touch-action: manipulation;
-        }
-        .reroll-btn:active { transform: scale(0.95); }
-        .reroll-btn:disabled {
-            background: #475569;
-            color: #94a3b8;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        .color-1 { background-color: #e11d48; color: #e11d48; }
-        .color-2 { background-color: #2563eb; color: #2563eb; }
-        .color-3 { background-color: #059669; color: #059669; }
-        .color-4 { background-color: #d97706; color: #d97706; }
-        .color-5 { background-color: #7c3aed; color: #7c3aed; }
-        .color-6 { background-color: #db2777; color: #db2777; }
-        .color-7 { background-color: #0891b2; color: #0891b2; }
-        .color-8 { background-color: #9333ea; color: #9333ea; }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(8px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-        .modal-overlay.active { opacity: 1; pointer-events: auto; }
-        .modal-card {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 20px;
-            padding: 25px 20px;
-            width: 90%;
-            max-width: 360px;
-            text-align: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-            transform: scale(0.8);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .modal-overlay.active .modal-card { transform: scale(1); }
-        .modal-title {
-            font-size: 24px;
-            font-weight: 800;
-            color: #38bdf8;
-            margin: 0 0 15px 0;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .menu-setting-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #0f172a;
-            padding: 12px 16px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-        }
-        .setting-label {
-            font-size: 15px;
-            font-weight: 600;
-            color: #cbd5e1;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .toggle-btn {
-            background: #334155;
-            color: #94a3b8;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 20px;
             font-size: 12px;
-            font-weight: bold;
             cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
             transition: all 0.2s;
         }
-        .toggle-btn.on { background: #059669; color: #ffffff; }
 
-        .menu-action-btn {
-            background: #dc2626;
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 12px;
-            font-size: 15px;
-            font-weight: bold;
-            border-radius: 12px;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: transform 0.1s;
-        }
-        .menu-action-btn:active { transform: scale(0.96); }
-
-        .close-btn {
-            background: #38bdf8;
-            color: #0f172a;
-            border: none;
-            width: 100%;
-            padding: 12px;
-            font-size: 15px;
-            font-weight: bold;
-            border-radius: 12px;
-            cursor: pointer;
-            margin-top: 8px;
+        .reroll-btn:disabled {
+            background: #475569;
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
-        .difficulty-btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-bottom: 12px;
-            transition: transform 0.1s, filter 0.2s;
-            color: #ffffff;
+        .piece-holders {
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 12px;
+            border-radius: 14px;
+            height: 110px;
             align-items: center;
-            gap: 2px;
-        }
-        .difficulty-btn:active { transform: scale(0.96); }
-        .btn-easy { background: #059669; }
-        .btn-medium { background: #d97706; }
-        .btn-hard { background: #dc2626; }
-        
-        .diff-subtext {
-            font-size: 11px;
-            opacity: 0.85;
-            font-weight: normal;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .level-up-container {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 3000;
+        .piece-holder {
+            flex: 1;
             display: flex;
-            flex-direction: column;
+            align-items: center;
             justify-content: center;
-            align-items: center;
-            overflow: hidden;
+            height: 100%;
+            cursor: grab;
+            position: relative;
         }
 
-        .shooting-star {
-            position: absolute;
-            width: 4px;
-            height: 120px;
-            background: linear-gradient(180deg, #facc15, #f59e0b, transparent);
-            animation: shootStarBottomToTop 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-            filter: drop-shadow(0 0 10px #facc15);
-            opacity: 0;
+        .piece-holder.disabled {
+            cursor: not-allowed;
+            opacity: 0.3;
         }
 
-        @keyframes shootStarBottomToTop {
-            0% { transform: translateY(500px) scaleY(0.3); opacity: 1; }
-            50% { opacity: 1; }
-            100% { transform: translateY(-700px) scaleY(2.2); opacity: 0; }
+        .piece-holder:active {
+            cursor: grabbing;
         }
 
-        .level-up-text {
-            font-size: 52px;
-            font-weight: 900;
-            color: #facc15;
-            text-shadow: 0 0 20px #eab308, 0 0 40px #ca8a04;
-            animation: textPop 1.8s ease-out forwards;
-            letter-spacing: 2px;
-            text-align: center;
+        .piece-grid {
+            display: grid;
+            gap: 2px;
+            pointer-events: none;
         }
 
-        .level-subtext {
-            font-size: 22px;
-            font-weight: bold;
-            color: #38bdf8;
-            margin-top: 10px;
-            text-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
-            animation: textPop 1.8s ease-out forwards;
-            letter-spacing: 1px;
+        .piece-block {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
         }
 
-        @keyframes textPop {
-            0% { transform: scale(0); opacity: 0; }
-            20% { transform: scale(1.3); opacity: 1; }
-            80% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(0.7); opacity: 0; }
-        }
-
-        .spark {
+        /* Sürükleme Efekti - Parmağın Üstünde ve Kaymasız */
+        .dragging {
             position: fixed;
+            pointer-events: none;
+            z-index: 1000;
+            transform: translate(-50%, -140%) scale(1.15);
+            opacity: 0.95;
+            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5));
+        }
+
+        /* Efektler ve Animasyonlar */
+        .spark {
+            position: absolute;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             pointer-events: none;
-            z-index: 2500;
-            animation: fireworkSpark 0.65s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
-            box-shadow: 0 0 8px currentColor;
+            z-index: 500;
+            animation: sparkAnim 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
         }
 
-        @keyframes fireworkSpark {
-            0% { transform: translate(0, 0) scale(1.4); opacity: 1; }
+        @keyframes sparkAnim {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
             100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
         }
 
-        .exploding-cell {
-            transform: scale(0.8);
-            opacity: 0.1;
-            transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+        .flying-banana {
+            position: fixed;
+            font-size: 28px;
+            pointer-events: none;
+            z-index: 2000;
+            transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.6s ease;
+        }
+
+        .combo-text {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            font-weight: 900;
+            color: #facc15;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            pointer-events: none;
+            opacity: 0;
+            z-index: 100;
+            transition: opacity 0.2s ease;
+        }
+
+        /* Modallar */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(8px);
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: #064e3b;
+            border: 2px solid #34d399;
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            width: 85%;
+            max-width: 340px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .modal-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #34d399;
+        }
+
+        .modal-btn {
+            background: #059669;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            padding: 12px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: background 0.2s;
+        }
+
+        .modal-btn:hover {
+            background: #047857;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+            padding: 10px 14px;
+            border-radius: 10px;
+        }
+
+        .setting-toggle {
+            background: #dc2626;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            padding: 6px 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .setting-toggle.on {
+            background: #059669;
+        }
+
+        .level-up-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            z-index: 3100;
+        }
+
+        .level-up-text {
+            font-size: 32px;
+            font-weight: 900;
+            color: #facc15;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.9);
+            animation: popText 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .level-subtext {
+            font-size: 18px;
+            font-weight: bold;
+            color: #34d399;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.9);
+            margin-top: 5px;
+        }
+
+        @keyframes popText {
+            0% { transform: scale(0.2); opacity: 0; }
+            80% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="score-container">
-            <span class="score-label">Skor</span>
-            <span id="score" class="score-value">0</span>
-        </div>
-        <div class="score-container" style="align-items: center;">
-            <span class="score-label">Zorluk</span>
-            <span id="difficulty-badge" class="level-value" style="font-size: 15px; color: #059669;">Kolay</span>
-        </div>
-        <div class="score-container" style="align-items: center;">
-            <span class="score-label">Coin</span>
-            <span id="coins" class="coin-value">🪙 0</span>
-        </div>
-        <div class="score-container" style="align-items: flex-end;">
-            <span class="score-label">En Yüksek</span>
-            <span id="best-score" class="score-value" style="color: #cbd5e1; font-size: 20px;">0</span>
-        </div>
-    </header>
-
-    <div class="top-controls">
-        <div class="score-container">
-            <span class="score-label">Süre</span>
-            <span id="timer" class="time-value">⏱️ 00:00</span>
-        </div>
-        <button id="menu-btn" class="icon-btn">⚙️ Menü</button>
-    </div>
-
-    <div id="combo" class="combo-badge">COMBO x2!</div>
-
-    <div class="game-board-wrapper">
-        <div class="orangutan-stage" id="orangutan-stage">
-            <svg id="orangutan-svg" class="orangutan-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <ellipse cx="50" cy="65" rx="26" ry="22" fill="#a0522d"/>
-                <ellipse cx="50" cy="66" rx="18" ry="14" fill="#d2b48c"/>
-                
-                <ellipse cx="32" cy="82" rx="10" ry="6" fill="#8b4513"/>
-                <ellipse cx="68" cy="82" rx="10" ry="6" fill="#8b4513"/>
-
-                <g class="arm-left-group">
-                    <path d="M 30 55 Q 12 35 18 18" stroke="#8b4513" stroke-width="10" stroke-linecap="round" fill="none"/>
-                    <circle cx="18" cy="16" r="7" fill="#d2b48c"/>
-                </g>
-
-                <g class="arm-right-group">
-                    <path d="M 70 55 Q 88 45 82 25" stroke="#8b4513" stroke-width="10" stroke-linecap="round" fill="none"/>
-                    <circle cx="82" cy="23" r="7" fill="#d2b48c"/>
-                </g>
-
-                <circle cx="28" cy="38" r="8" fill="#8b4513"/>
-                <circle cx="28" cy="38" r="4" fill="#d2b48c"/>
-                <circle cx="72" cy="38" r="8" fill="#8b4513"/>
-                <circle cx="72" cy="38" r="4" fill="#d2b48c"/>
-
-                <circle cx="50" cy="38" r="22" fill="#a0522d"/>
-                <ellipse cx="50" cy="42" rx="15" ry="12" fill="#d2b48c"/>
-
-                <circle cx="43" cy="36" r="3" fill="#000"/>
-                <circle cx="57" cy="36" r="3" fill="#000"/>
-                <circle cx="44" cy="35" r="1" fill="#fff"/>
-                <circle cx="58" cy="35" r="1" fill="#fff"/>
-
-                <ellipse cx="50" cy="43" rx="4" ry="2.5" fill="#5c2c0c"/>
-                <path d="M 44 47 Q 50 52 56 47" stroke="#5c2c0c" stroke-width="2" stroke-linecap="round" fill="none"/>
-            </svg>
-        </div>
-        <div id="grid"></div>
-    </div>
-
-    <div class="bottom-panel">
-        <div class="pieces-area">
-            <div class="hold-section">
-                <span class="hold-title">📦 Yedek</span>
-                <div class="piece-holder hold-box" id="hold-holder" data-type="hold"></div>
+    <div class="game-container">
+        <!-- Üst Bilgi Paneli -->
+        <div class="header-panel">
+            <div class="stat-box">
+                <span class="stat-label">Skor</span>
+                <span class="stat-value" id="score">0</span>
             </div>
-
-            <div class="pieces-container" id="pieces-container">
-                <div class="piece-holder" data-index="0" data-type="main"></div>
-                <div class="piece-holder" data-index="1" data-type="main"></div>
-                <div class="piece-holder" data-index="2" data-type="main"></div>
+            <div class="stat-box">
+                <span class="stat-label">En İyi</span>
+                <span class="stat-value" id="best-score">0</span>
             </div>
+            <div class="stat-box">
+                <span class="stat-label">Süre</span>
+                <span class="stat-value" id="timer">⏱️ 00:00</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Cüzdan</span>
+                <span class="stat-value" id="coins">🪙 0</span>
+            </div>
+            <button class="menu-btn" id="menu-btn">⚙️</button>
         </div>
-        
-        <button id="reroll-btn" class="reroll-btn">
-            🔄 Şekil Değiştir (500 🪙)
-        </button>
-    </div>
 
-    <div id="level-overlay" class="level-up-container"></div>
+        <!-- Oyun Alanı -->
+        <div class="board-area">
+            <div class="combo-text" id="combo-text">COMBO x2!</div>
+            <div class="orangutan-container">
+                <svg class="orangutan-svg" id="orangutan-svg" viewBox="0 0 100 100">
+                    <circle cx="50" cy="55" r="30" fill="#b45309"/>
+                    <circle cx="30" cy="40" r="12" fill="#b45309"/>
+                    <circle cx="70" cy="40" r="12" fill="#b45309"/>
+                    <circle cx="30" cy="40" r="8" fill="#fde68a"/>
+                    <circle cx="70" cy="40" r="8" fill="#fde68a"/>
+                    <ellipse cx="50" cy="62" rx="18" ry="12" fill="#fde68a"/>
+                    <circle cx="42" cy="58" r="3" fill="#1e293b"/>
+                    <circle cx="58" cy="58" r="3" fill="#1e293b"/>
+                    <path d="M 44 68 Q 50 74 56 68" stroke="#1e293b" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="grid" id="grid"></div>
+        </div>
 
-    <!-- Zorluk Seçim Modalı -->
-    <div id="difficulty-modal" class="modal-overlay active">
-        <div class="modal-card">
-            <h2 class="modal-title">Zorluk Seç</h2>
-            <div style="font-size: 13px; color: #94a3b8; margin-bottom: 20px;">Nasıl bir deneyim istersin?</div>
-            
-            <button class="difficulty-btn btn-easy" data-diff="easy">
-                <span>🟢 Kolay (Çocuk Oyunu)</span>
-                <span class="diff-subtext">Level 1</span>
-            </button>
-            
-            <button class="difficulty-btn btn-medium" data-diff="medium">
-                <span>🟡 Orta (Dengeli)</span>
-                <span class="diff-subtext">Level 1</span>
-            </button>
-            
-            <button class="difficulty-btn btn-hard" data-diff="hard">
-                <span>🔴 Zor (Usta İşi)</span>
-                <span class="diff-subtext">Level 1</span>
-            </button>
+        <!-- Alt Panel -->
+        <div class="bottom-panel">
+            <div class="tools-bar">
+                <div class="hold-container" id="hold-holder">
+                    <span class="hold-label">Beklet</span>
+                </div>
+                <button class="reroll-btn" id="reroll-btn" disabled>🔄 Şekil Değiştir (500 🪙)</button>
+            </div>
+            <div class="piece-holders">
+                <div class="piece-holder" data-index="0"></div>
+                <div class="piece-holder" data-index="1"></div>
+                <div class="piece-holder" data-index="2"></div>
+            </div>
         </div>
     </div>
 
-    <div id="settings-modal" class="modal-overlay">
-        <div class="modal-card">
-            <h2 class="modal-title" id="menu-title">Ayarlar</h2>
-            
-            <div class="menu-setting-row">
-                <span class="setting-label">🎵 Müzik</span>
-                <button id="toggle-music" class="toggle-btn on">AÇIK</button>
+    <!-- Ayarlar Modalı -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <div class="modal-title">Oyun Ayarları</div>
+            <div class="setting-row">
+                <span>Müzik (Ambient)</span>
+                <button class="setting-toggle" id="toggle-music">KAPALI</button>
             </div>
-
-            <div class="menu-setting-row">
-                <span class="setting-label">🔊 Ses Efektleri</span>
-                <button id="toggle-sfx" class="toggle-btn on">AÇIK</button>
+            <div class="setting-row">
+                <span>Ses Efektleri</span>
+                <button class="setting-toggle" id="toggle-sfx">AÇIK</button>
             </div>
-
-            <button id="restart-game-btn" class="menu-action-btn">🔄 Oyunu Yeniden Başlat</button>
-            <button id="close-menu-btn" class="close-btn">Devam Et</button>
+            <button class="modal-btn" id="close-menu-btn">Oyuna Dön</button>
+            <button class="modal-btn" id="restart-game-btn" style="background: #dc2626;">Yeniden Başlat</button>
         </div>
     </div>
 
-    <div id="game-over-modal" class="modal-overlay">
-        <div class="modal-card">
-            <h2 class="modal-title" style="color: #ef4444;">Oyun Bitti</h2>
-            <div style="background: #0f172a; border-radius: 12px; padding: 15px; margin: 15px 0;">
-                <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase;">Skorun</div>
-                <div id="final-score" style="font-size: 36px; font-weight: bold; color: #38bdf8;">0</div>
-                <div style="font-size: 13px; color: #10b981; margin-top: 5px;">Geçen Süre: <span id="final-time">00:00</span></div>
-            </div>
-            <div style="font-size: 14px; color: #cbd5e1; margin-bottom: 20px;">
-                En Yüksek Skor: <strong id="modal-best-score" style="color: #38bdf8;">0</strong>
-            </div>
-            <button id="modal-restart-btn" class="menu-action-btn" style="background: #0284c7;">Yeniden Başla</button>
+    <!-- Oyun Bitti Modalı -->
+    <div class="modal" id="game-over-modal">
+        <div class="modal-content">
+            <div class="modal-title" style="color: #ef4444;">Oyun Bitti!</div>
+            <div style="font-size: 16px; color: #cbd5e1;">Skorun: <span id="final-score" style="font-weight:bold; color:#fff;">0</span></div>
+            <div style="font-size: 14px; color: #cbd5e1;">Süre: <span id="final-time" style="font-weight:bold; color:#fff;">00:00</span></div>
+            <div style="font-size: 14px; color: #cbd5e1;">En İyi Skor: <span id="modal-best-score" style="font-weight:bold; color:#facc15;">0</span></div>
+            <button class="modal-btn" id="modal-restart-btn">Tekrar Oyna</button>
         </div>
     </div>
 
     <script>
-        const BOARD_SIZE = 10;
+        const BOARD_SIZE = 8;
         let grid = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
         let gridColors = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
         let score = 0;
-        let coins = 0;
-        let gameDifficulty = localStorage.getItem('bb_difficulty') || 'easy';
         let bestScore = parseInt(localStorage.getItem('block_breaker_best')) || 0;
-        let lastCoinThreshold = 0;
-        let lastBananaThreshold = 0;
-        let isPaused = false;
-
+        let coins = parseInt(localStorage.getItem('block_breaker_coins')) || 0;
         let totalSeconds = 0;
-        let gameTimerInterval = null;
-
-        let musicEnabled = JSON.parse(localStorage.getItem('bb_music') ?? 'true');
-        let sfxEnabled = JSON.parse(localStorage.getItem('bb_sfx') ?? 'true');
-
-        const gridElement = document.getElementById('grid');
-        const scoreElement = document.getElementById('score');
-        const timerElement = document.getElementById('timer');
-        const difficultyBadge = document.getElementById('difficulty-badge');
-        const coinsElement = document.getElementById('coins');
-        const bestScoreElement = document.getElementById('best-score');
-        const comboElement = document.getElementById('combo');
-        const rerollBtn = document.getElementById('reroll-btn');
-        const menuBtn = document.getElementById('menu-btn');
-        const pieceHolders = document.querySelectorAll('.piece-holder[data-type="main"]');
-        const holdHolder = document.getElementById('hold-holder');
-        const levelOverlay = document.getElementById('level-overlay');
-        const orangutanSvg = document.getElementById('orangutan-svg');
-        
-        const difficultyModal = document.getElementById('difficulty-modal');
-        const settingsModal = document.getElementById('settings-modal');
-        const menuTitle = document.getElementById('menu-title');
-        const toggleMusicBtn = document.getElementById('toggle-music');
-        const toggleSfxBtn = document.getElementById('toggle-sfx');
-        const restartGameBtn = document.getElementById('restart-game-btn');
-        const closeMenuBtn = document.getElementById('close-menu-btn');
-
-        const gameOverModal = document.getElementById('game-over-modal');
-        const finalScoreElement = document.getElementById('final-score');
-        const finalTimeElement = document.getElementById('final-time');
-        const modalBestScoreElement = document.getElementById('modal-best-score');
-        const modalRestartBtn = document.getElementById('modal-restart-btn');
-
-        bestScoreElement.textContent = bestScore;
-        updateCoinsDisplay();
-        syncSettingUI();
-        updateDifficultyUI();
-
-        const ALL_COLORS = ['color-1', 'color-2', 'color-3', 'color-4', 'color-5', 'color-6', 'color-7', 'color-8'];
-
-        const VERY_EASY_POOL = [
-            { shape: [[1]], color: 'color-3' },
-            { shape: [[1, 1]], color: 'color-2' },
-            { shape: [[1], [1]], color: 'color-2' },
-            { shape: [[1, 1, 1]], color: 'color-4' },
-            { shape: [[1], [1], [1]], color: 'color-4' },
-            { shape: [[1, 1], [1, 1]], color: 'color-5' }
-        ];
-
-        const EASY_POOL = [
-            { shape: [[1]], color: 'color-2' },
-            { shape: [[1, 1]], color: 'color-3' },
-            { shape: [[1], [1]], color: 'color-3' },
-            { shape: [[1, 1, 1]], color: 'color-4' },
-            { shape: [[1], [1], [1]], color: 'color-4' },
-            { shape: [[1, 1], [1, 1]], color: 'color-5' },
-            { shape: [[1, 0], [1, 1]], color: 'color-6' },
-            { shape: [[0, 1], [1, 1]], color: 'color-7' }
-        ];
-
-        const MEDIUM_POOL = [
-            { shape: [[1, 1, 1, 1]], color: 'color-8' },
-            { shape: [[1], [1], [1], [1]], color: 'color-8' },
-            { shape: [[1, 1, 1], [1, 0, 0]], color: 'color-1' },
-            { shape: [[1, 1, 1], [0, 0, 1]], color: 'color-5' },
-            { shape: [[1, 1, 1], [0, 1, 0]], color: 'color-7' },
-            { shape: [[1, 1], [1, 0], [1, 0]], color: 'color-2' },
-            { shape: [[1, 1, 1, 1, 1]], color: 'color-3' },
-            { shape: [[1], [1], [1], [1], [1]], color: 'color-3' }
-        ];
-
-        const HARD_POOL = [
-            { shape: [[1, 1, 1, 1, 1]], color: 'color-7' },
-            { shape: [[1], [1], [1], [1], [1]], color: 'color-7' },
-            { shape: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: 'color-5' },
-            { shape: [[1, 1, 1, 1], [1, 1, 1, 1]], color: 'color-1' },
-            { shape: [[1, 1, 1], [1, 0, 1], [1, 1, 1]], color: 'color-6' },
-            { shape: [[1, 0, 0], [1, 0, 0], [1, 1, 1]], color: 'color-4' },
-            { shape: [[0, 0, 1], [0, 0, 1], [1, 1, 1]], color: 'color-2' }
-        ];
+        let timerInterval = null;
+        let isPaused = false;
 
         let currentPieces = [null, null, null];
         let heldPiece = null;
         let canHold = true;
-        let activeDrag = null;
 
+        let lastCoinThreshold = 0;
+        let lastBananaThreshold = 0;
+
+        let musicEnabled = JSON.parse(localStorage.getItem('bb_music')) || false;
+        let sfxEnabled = JSON.parse(localStorage.getItem('bb_sfx')) !== false;
         let audioCtx = null;
-        let ambientTimer = null;
 
-        function updateDifficultyUI() {
-            if (gameDifficulty === 'easy') {
-                difficultyBadge.textContent = 'Kolay';
-                difficultyBadge.style.color = '#059669';
-            } else if (gameDifficulty === 'medium') {
-                difficultyBadge.textContent = 'Orta';
-                difficultyBadge.style.color = '#d97706';
-            } else {
-                difficultyBadge.textContent = 'Zor';
-                difficultyBadge.style.color = '#dc2626';
+        const ALL_COLORS = ['color-1', 'color-2', 'color-3', 'color-4', 'color-5', 'color-6', 'color-7', 'color-8'];
+        
+        // Zorlaştırılmış Havuz: Küçük şekiller azaltıldı, büyük ve karmaşık bloklar ağırlık kazandı.
+        const HARD_POOL = [
+            { shape: [[1, 1, 1, 1]], color: 'color-2' },
+            { shape: [[1], [1], [1], [1]], color: 'color-3' },
+            { shape: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: 'color-5' },
+            { shape: [[1, 1, 0], [0, 1, 1]], color: 'color-6' },
+            { shape: [[0, 1, 1], [1, 1, 0]], color: 'color-7' },
+            { shape: [[1, 1, 1], [0, 1, 0]], color: 'color-8' },
+            { shape: [[1, 1, 1], [1, 0, 0], [1, 0, 0]], color: 'color-1' },
+            { shape: [[1, 1], [1, 1]], color: 'color-4' },
+            { shape: [[1, 1, 1], [1, 1, 1]], color: 'color-2' },
+            { shape: [[1, 1, 1, 1, 1]], color: 'color-3' }
+        ];
+
+        const gridElement = document.getElementById('grid');
+        const scoreElement = document.getElementById('score');
+        const bestScoreElement = document.getElementById('best-score');
+        const coinsElement = document.getElementById('coins');
+        const timerElement = document.getElementById('timer');
+        const pieceHolders = document.querySelectorAll('.piece-holder');
+        const holdHolder = document.getElementById('hold-holder');
+        const rerollBtn = document.getElementById('reroll-btn');
+        const orangutanSvg = document.getElementById('orangutan-svg');
+        const levelOverlay = document.querySelector('.board-area');
+
+        const settingsModal = document.getElementById('settings-modal');
+        const gameOverModal = document.getElementById('game-over-modal');
+        const menuBtn = document.getElementById('menu-btn');
+        const closeMenuBtn = document.getElementById('close-menu-btn');
+        const restartGameBtn = document.getElementById('restart-game-btn');
+        const modalRestartBtn = document.getElementById('modal-restart-btn');
+        const toggleMusicBtn = document.getElementById('toggle-music');
+        const toggleSfxBtn = document.getElementById('toggle-sfx');
+
+        const finalScoreElement = document.getElementById('final-score');
+        const finalTimeElement = document.getElementById('final-time');
+        const modalBestScoreElement = document.getElementById('modal-best-score');
+
+        bestScoreElement.textContent = bestScore;
+        coinsElement.textContent = `🪙 ${coins}`;
+        syncSettingUI();
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (!isPaused) {
+                    totalSeconds++;
+                    updateTimerDisplay();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+            const secs = String(totalSeconds % 60).padStart(2, '0');
+            timerElement.textContent = `⏱️ ${mins}:${secs}`;
+            return timerElement.textContent;
+        }
+
+        function stopTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+        }
+
+        function pauseGame() {
+            isPaused = true;
+            stopTimer();
+            settingsModal.classList.add('active');
+        }
+
+        function resumeGame() {
+            isPaused = false;
+            startTimer();
+            settingsModal.classList.remove('active');
         }
 
         function saveGameState() {
@@ -774,44 +650,33 @@
                 gridColors,
                 score,
                 coins,
-                gameDifficulty,
                 totalSeconds,
-                lastCoinThreshold,
-                lastBananaThreshold,
                 currentPieces,
                 heldPiece,
                 canHold
             };
-            localStorage.setItem('bb_saved_game', JSON.stringify(state));
-        }
-
-        function clearSavedGame() {
-            localStorage.removeItem('bb_saved_game');
+            localStorage.setItem('block_breaker_save', JSON.stringify(state));
+            localStorage.setItem('block_breaker_coins', coins);
         }
 
         function loadGameState() {
-            const saved = localStorage.getItem('bb_saved_game');
+            const saved = localStorage.getItem('block_breaker_save');
             if (!saved) return false;
-
             try {
                 const state = JSON.parse(saved);
                 grid = state.grid;
                 gridColors = state.gridColors;
                 score = state.score;
                 coins = state.coins;
-                gameDifficulty = state.gameDifficulty || 'easy';
                 totalSeconds = state.totalSeconds;
-                lastCoinThreshold = state.lastCoinThreshold;
-                lastBananaThreshold = state.lastBananaThreshold;
                 currentPieces = state.currentPieces;
                 heldPiece = state.heldPiece;
                 canHold = state.canHold;
 
                 scoreElement.textContent = score;
-                updateDifficultyUI();
-                updateCoinsDisplay();
+                coinsElement.textContent = `🪙 ${coins}`;
                 updateTimerDisplay();
-                renderGrid();
+                initGrid();
                 renderAllHolders();
                 startTimer();
                 return true;
@@ -820,127 +685,504 @@
             }
         }
 
-        function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                startAmbientMusic();
-            }
-            if (audioCtx.state === 'suspended' && !isPaused) {
-                audioCtx.resume();
-            }
+        function clearSavedGame() {
+            localStorage.removeItem('block_breaker_save');
         }
 
-        function startTimer() {
-            if (gameTimerInterval) clearInterval(gameTimerInterval);
-            gameTimerInterval = setInterval(() => {
-                if (!isPaused && !difficultyModal.classList.contains('active')) {
-                    totalSeconds++;
-                    updateTimerDisplay();
-                    saveGameState();
+        function playSfx(type) {
+            if (!audioCtx || !sfxEnabled || isPaused) return;
+            try {
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'drop') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(320, now);
+                    osc.frequency.exponentialRampToValueAtTime(120, now + 0.12);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.linearRampToValueAtTime(0.001, now + 0.12);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } else if (type === 'clear') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.25);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.001, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'coin') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(587.33, now);
+                    osc.frequency.setValueAtTime(880, now + 0.08);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.linearRampToValueAtTime(0.001, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'game_over') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.linearRampToValueAtTime(100, now + 0.6);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.001, now + 0.6);
+                    osc.start(now);
+                    osc.stop(now + 0.6);
                 }
-            }, 1000);
+            } catch(e) {}
         }
 
-        function stopTimer() {
-            if (gameTimerInterval) {
-                clearInterval(gameTimerInterval);
-                gameTimerInterval = null;
+        function createSparkles(x, y, colorClass) {
+            const colors = {
+                'color-1': '#e11d48', 'color-2': '#2563eb', 'color-3': '#059669', 'color-4': '#d97706',
+                'color-5': '#7c3aed', 'color-6': '#db2777', 'color-7': '#0891b2', 'color-8': '#9333ea'
+            };
+            const col = colors[colorClass] || '#38bdf8';
+            for (let i = 0; i < 10; i++) {
+                const spark = document.createElement('div');
+                spark.className = 'spark';
+                spark.style.backgroundColor = col;
+                spark.style.left = `${x}px`;
+                spark.style.top = `${y}px`;
+                const size = 6 + Math.random() * 4;
+                spark.style.width = `${size}px`;
+                spark.style.height = `${size}px`;
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 30 + Math.random() * 60;
+                spark.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+                spark.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+                document.body.appendChild(spark);
+                setTimeout(() => spark.remove(), 600);
             }
         }
 
-        function updateTimerDisplay() {
-            const mins = Math.floor(totalSeconds / 60);
-            const secs = totalSeconds % 60;
-            const formatted = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-            timerElement.textContent = `⏱️ ${formatted}`;
-            return formatted;
+        function createFlyingBanana(startX, startY) {
+            const banana = document.createElement('div');
+            banana.className = 'flying-banana';
+            banana.textContent = '🍌';
+            banana.style.left = `${startX}px`;
+            banana.style.top = `${startY}px`;
+            document.body.appendChild(banana);
+
+            const coinsRect = coinsElement.getBoundingClientRect();
+            const targetX = coinsRect.left + coinsRect.width / 2;
+            const targetY = coinsRect.top + coinsRect.height / 2;
+
+            requestAnimationFrame(() => {
+                banana.style.transform = `translate(${targetX - startX}px, ${targetY - startY}px) scale(0.4) rotate(360deg)`;
+                banana.style.opacity = '0.3';
+            });
+
+            setTimeout(() => {
+                banana.remove();
+                coins += 50;
+                updateCoinsDisplay();
+                playSfx('coin');
+                triggerOrangutanAction('throw');
+                saveGameState();
+            }, 600);
         }
 
-        window.addEventListener('pointerdown', initAudio, { once: false });
-
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden && !difficultyModal.classList.contains('active')) {
-                pauseGame();
-            }
-        });
-
-        function pauseGame() {
-            isPaused = true;
-            menuTitle.textContent = "OYUN DURDURULDU";
-            settingsModal.classList.add('active');
-            if (audioCtx && audioCtx.state === 'running') {
-                audioCtx.suspend();
-            }
+        function triggerOrangutanAction(action) {
+            orangutanSvg.classList.remove('arms-move', 'arms-celebrate', 'arms-throw');
+            void orangutanSvg.offsetWidth;
+            if (action === 'move') orangutanSvg.classList.add('arms-move');
+            else if (action === 'celebrate') orangutanSvg.classList.add('arms-celebrate');
+            else if (action === 'throw') orangutanSvg.classList.add('arms-throw');
         }
 
-        function resumeGame() {
-            isPaused = false;
-            menuTitle.textContent = "AYARLAR";
-            settingsModal.classList.remove('active');
-            if (musicEnabled && audioCtx && audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+        function triggerLevelUpCelebration(title, subtitle) {
+            playSfx('coin');
+            triggerOrangutanAction('celebrate');
+            const container = document.createElement('div');
+            container.className = 'level-up-container';
+            container.innerHTML = `<div class="level-up-text">${title}</div><div class="level-subtext">${subtitle}</div>`;
+            levelOverlay.appendChild(container);
+            setTimeout(() => container.remove(), 1800);
         }
 
-        function playTone(freq, duration = 2.5) {
-            if (!audioCtx || !musicEnabled || isPaused) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-
-            gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 0.04);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            osc.start(audioCtx.currentTime);
-            osc.stop(audioCtx.currentTime + duration);
+        function updateCoinsDisplay() {
+            coinsElement.textContent = `🪙 ${coins}`;
+            updateRerollButtonState();
         }
 
-        function startAmbientMusic() {
-            const notes = [261.63, 329.63, 392.00, 493.88, 523.25];
-            let idx = 0;
-
-            function nextNote() {
-                if (musicEnabled && audioCtx && audioCtx.state === 'running' && !isPaused) {
-                    const freq = notes[idx % notes.length];
-                    playTone(freq, 2.2);
-                    if (idx % 3 === 0) playTone(freq * 1.25, 2.0);
-                    idx++;
-                }
-                ambientTimer = setTimeout(nextNote, 2500);
-            }
-            nextNote();
+        function updateRerollButtonState() {
+            rerollBtn.disabled = coins < 500;
         }
 
         function syncSettingUI() {
-            toggleMusicBtn.textContent = musicEnabled ? 'AÇIK' : 'KAPALI';
-            toggleMusicBtn.className = `toggle-btn ${musicEnabled ? 'on' : ''}`;
+            toggleMusicBtn.textContent = musicEnabled ? "AÇIK" : "KAPALI";
+            if (musicEnabled) toggleMusicBtn.classList.add('on');
+            else toggleMusicBtn.classList.remove('on');
 
-            toggleSfxBtn.textContent = sfxEnabled ? 'AÇIK' : 'KAPALI';
-            toggleSfxBtn.className = `toggle-btn ${sfxEnabled ? 'on' : ''}`;
+            toggleSfxBtn.textContent = sfxEnabled ? "AÇIK" : "KAPALI";
+            if (sfxEnabled) toggleSfxBtn.classList.add('on');
+            else toggleSfxBtn.classList.remove('on');
         }
 
-        menuBtn.addEventListener('click', () => {
+        function initGrid() {
+            gridElement.innerHTML = '';
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    if (grid[r][c] === 1 && gridColors[r][c]) {
+                        cell.classList.add('filled', gridColors[r][c]);
+                    }
+                    gridElement.appendChild(cell);
+                }
+            }
+        }
+
+        function renderGrid() {
+            const cells = gridElement.children;
+            let idx = 0;
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    const cell = cells[idx++];
+                    cell.className = 'cell';
+                    if (grid[r][c] === 1 && gridColors[r][c]) {
+                        cell.classList.add('filled', gridColors[r][c]);
+                    }
+                }
+            }
+        }
+
+        function getRandomPiece() {
+            const template = HARD_POOL[Math.floor(Math.random() * HARD_POOL.length)];
+            let color = template.color;
+            if (Math.random() < 0.25) {
+                color = ALL_COLORS[Math.floor(Math.random() * ALL_COLORS.length)];
+            }
+            return { shape: template.shape, color: color };
+        }
+
+        function generateNewPieces() {
+            for (let i = 0; i < 3; i++) {
+                currentPieces[i] = getRandomPiece();
+            }
+            canHold = true;
+            renderAllHolders();
+            if (checkGameOverCondition()) triggerGameOver();
+        }
+
+        function renderPieceIntoHolder(holder, piece) {
+            holder.innerHTML = '';
+            if (!piece) return;
+            const rows = piece.shape.length;
+            const cols = piece.shape[0].length;
+            const pieceGrid = document.createElement('div');
+            pieceGrid.className = 'piece-grid';
+            pieceGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            pieceGrid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const block = document.createElement('div');
+                    block.className = 'piece-block';
+                    if (piece.shape[r][c] === 1) {
+                        block.classList.add(piece.color);
+                    } else {
+                        block.style.backgroundColor = 'transparent';
+                    }
+                    pieceGrid.appendChild(block);
+                }
+            }
+            holder.appendChild(pieceGrid);
+        }
+
+        function renderAllHolders() {
+            pieceHolders.forEach((holder, idx) => {
+                renderPieceIntoHolder(holder, currentPieces[idx]);
+                if (!currentPieces[idx]) holder.classList.add('disabled');
+                else holder.classList.remove('disabled');
+            });
+            renderPieceIntoHolder(holdHolder, heldPiece);
+            if (heldPiece && !canHold) holdHolder.classList.add('disabled');
+            else holdHolder.classList.remove('disabled');
+        }
+
+        function checkGameOverCondition() {
+            const activePieces = currentPieces.filter(p => p !== null);
+            if (activePieces.length === 0) return false;
+
+            for (let p of activePieces) {
+                for (let r = 0; r < BOARD_SIZE; r++) {
+                    for (let c = 0; c < BOARD_SIZE; c++) {
+                        if (canPlacePiece(p, r, c)) return false;
+                    }
+                }
+            }
+            if (heldPiece) {
+                for (let r = 0; r < BOARD_SIZE; r++) {
+                    for (let c = 0; c < BOARD_SIZE; c++) {
+                        if (canPlacePiece(heldPiece, r, c)) return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function canPlacePiece(piece, startR, startC) {
+            const shape = piece.shape;
+            const rows = shape.length;
+            const cols = shape[0].length;
+            if (startR + rows > BOARD_SIZE || startC + cols > BOARD_SIZE) return false;
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (shape[r][c] === 1 && grid[startR + r][startC + c] === 1) return false;
+                }
+            }
+            return true;
+        }
+
+        function getCellFromTouch(clientX, clientY) {
+            for (let cell of gridElement.children) {
+                const rect = cell.getBoundingClientRect();
+                if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+                    return { r: parseInt(cell.dataset.row), c: parseInt(cell.dataset.col) };
+                }
+            }
+            return null;
+        }
+
+        function clearPreview() {
+            for (let cell of gridElement.children) {
+                cell.classList.remove('preview');
+                ALL_COLORS.forEach(col => cell.classList.remove(col));
+            }
+        }
+
+        function showPreview(piece, targetR, targetC) {
+            clearPreview();
+            if (!piece) return;
+            const shape = piece.shape;
+            const cells = gridElement.children;
+            for (let r = 0; r < shape.length; r++) {
+                for (let c = 0; c < shape[0].length; c++) {
+                    if (shape[r][c] === 1) {
+                        const dr = targetR + r;
+                        const dc = targetC + c;
+                        if (dr >= 0 && dr < BOARD_SIZE && dc >= 0 && dc < BOARD_SIZE) {
+                            cells[dr * BOARD_SIZE + dc].classList.add('preview', piece.color);
+                        }
+                    }
+                }
+            }
+        }
+
+        function placePieceOnGrid(piece, startR, startC) {
+            const shape = piece.shape;
+            let blocksPlaced = 0;
+            for (let r = 0; r < shape.length; r++) {
+                for (let c = 0; c < shape[0].length; c++) {
+                    if (shape[r][c] === 1) {
+                        grid[startR + r][startC + c] = 1;
+                        gridColors[startR + r][startC + c] = piece.color;
+                        blocksPlaced++;
+                    }
+                }
+            }
+            score += blocksPlaced * 10;
+            playSfx('drop');
+            triggerOrangutanAction('move');
+            checkLinesAndClear();
+            updateScoreDisplay();
+        }
+
+        function checkLinesAndClear() {
+            let rowsToClear = [];
+            let colsToClear = [];
+
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                if (grid[r].every(val => val === 1)) rowsToClear.push(r);
+            }
+            for (let c = 0; c < BOARD_SIZE; c++) {
+                let full = true;
+                for (let r = 0; r < BOARD_SIZE; r++) {
+                    if (grid[r][c] === 0) { full = false; break; }
+                }
+                if (full) colsToClear.push(c);
+            }
+
+            const totalCleared = rowsToClear.length + colsToClear.length;
+            if (totalCleared > 0) {
+                playSfx('clear');
+                triggerOrangutanAction('celebrate');
+
+                rowsToClear.forEach(r => {
+                    for (let c = 0; c < BOARD_SIZE; c++) {
+                        grid[r][c] = 0;
+                        gridColors[r][c] = null;
+                        const rect = gridElement.children[r * BOARD_SIZE + c].getBoundingClientRect();
+                        createSparkles(rect.left + rect.width / 2, rect.top + rect.height / 2, 'color-4');
+                    }
+                });
+                colsToClear.forEach(c => {
+                    for (let r = 0; r < BOARD_SIZE; r++) {
+                        grid[r][c] = 0;
+                        gridColors[r][c] = null;
+                        const rect = gridElement.children[r * BOARD_SIZE + c].getBoundingClientRect();
+                        createSparkles(rect.left + rect.width / 2, rect.top + rect.height / 2, 'color-4');
+                    }
+                });
+
+                score += totalCleared * 100;
+                coins += totalCleared * 10;
+                updateCoinsDisplay();
+                checkMilestones();
+            }
+            renderGrid();
+            updateScoreDisplay();
+        }
+
+        function checkMilestones() {
+            if (score - lastCoinThreshold >= 500) {
+                lastCoinThreshold += 500;
+                coins += 100;
+                updateCoinsDisplay();
+                triggerLevelUpCelebration("BONUS COIN!", "+100 Coin Kazanıldı!");
+            }
+            if (score - lastBananaThreshold >= 1000) {
+                lastBananaThreshold += 1000;
+                createFlyingBanana(window.innerWidth / 2, window.innerHeight / 2);
+                triggerLevelUpCelebration("MUZ YAĞMURU!", "Muzlar Toplanıyor!");
+            }
+        }
+
+        function updateScoreDisplay() {
+            scoreElement.textContent = score;
+            if (score > bestScore) {
+                bestScore = score;
+                bestScoreElement.textContent = bestScore;
+                localStorage.setItem('block_breaker_best', bestScore);
+            }
+            saveGameState();
+        }
+
+        function triggerGameOver() {
+            stopTimer();
+            clearSavedGame();
+            playSfx('game_over');
+            finalScoreElement.textContent = score;
+            finalTimeElement.textContent = updateTimerDisplay().replace('⏱️ ', '');
+            modalBestScoreElement.textContent = bestScore;
+            gameOverModal.classList.add('active');
+        }
+
+        function setupDragAndDrop(holder, isMain, indexOrHold) {
+            let dragEl = null;
+
+            holder.addEventListener('pointerdown', e => {
+                if (isPaused) return;
+                initAudio();
+                const piece = isMain ? currentPieces[indexOrHold] : heldPiece;
+                if (!piece) return;
+
+                e.preventDefault();
+                const rect = holder.getBoundingClientRect();
+
+                dragEl = holder.cloneNode(true);
+                dragEl.className = 'dragging';
+                dragEl.style.left = `${rect.left}px`;
+                dragEl.style.top = `${rect.top}px`;
+                dragEl.style.width = `${rect.width}px`;
+                dragEl.style.height = `${rect.height}px`;
+                document.body.appendChild(dragEl);
+
+                holder.style.opacity = '0.3';
+
+                const onPointerMove = e => {
+                    if (!dragEl) return;
+                    // Sürüklenen şekil parmağın tam üstünde konumlanır
+                    dragEl.style.left = `${e.clientX}px`;
+                    dragEl.style.top = `${e.clientY}px`;
+
+                    const cellCoord = getCellFromTouch(e.clientX, e.clientY);
+                    if (cellCoord) {
+                        const tr = cellCoord.r - Math.floor(piece.shape.length / 2);
+                        const tc = cellCoord.c - Math.floor(piece.shape[0].length / 2);
+                        if (canPlacePiece(piece, tr, tc)) showPreview(piece, tr, tc);
+                        else clearPreview();
+                    } else {
+                        clearPreview();
+                    }
+                };
+
+                const onPointerUp = e => {
+                    window.removeEventListener('pointermove', onPointerMove);
+                    window.removeEventListener('pointerup', onPointerUp);
+                    clearPreview();
+
+                    const cellCoord = getCellFromTouch(e.clientX, e.clientY);
+                    let placed = false;
+                    if (cellCoord) {
+                        const tr = cellCoord.r - Math.floor(piece.shape.length / 2);
+                        const tc = cellCoord.c - Math.floor(piece.shape[0].length / 2);
+                        if (canPlacePiece(piece, tr, tc)) {
+                            placePieceOnGrid(piece, tr, tc);
+                            if (isMain) currentPieces[indexOrHold] = null;
+                            else { heldPiece = null; canHold = false; }
+                            placed = true;
+                        }
+                    }
+
+                    if (dragEl) dragEl.remove();
+                    holder.style.opacity = '1';
+                    renderAllHolders();
+
+                    if (placed) {
+                        if (currentPieces.every(p => p === null)) generateNewPieces();
+                        else if (checkGameOverCondition()) triggerGameOver();
+                    }
+                };
+
+                window.addEventListener('pointermove', onPointerMove);
+                window.addEventListener('pointerup', onPointerUp);
+            });
+        }
+
+        pieceHolders.forEach((holder, idx) => setupDragAndDrop(holder, true, idx));
+
+        holdHolder.addEventListener('pointerdown', e => {
+            if (!canHold || isPaused) return;
             initAudio();
-            pauseGame();
-            menuTitle.textContent = "AYARLAR";
+            const firstIdx = currentPieces.findIndex(p => p !== null);
+            if (firstIdx === -1) return;
+
+            const temp = currentPieces[firstIdx];
+            currentPieces[firstIdx] = heldPiece;
+            heldPiece = temp;
+            canHold = false;
+            playSfx('drop');
+            renderAllHolders();
+            saveGameState();
+            if (checkGameOverCondition()) triggerGameOver();
         });
 
-        closeMenuBtn.addEventListener('click', () => {
-            resumeGame();
+        rerollBtn.addEventListener('click', () => {
+            if (coins >= 500 && !isPaused) {
+                coins -= 500;
+                updateCoinsDisplay();
+                generateNewPieces();
+                playSfx('coin');
+                triggerOrangutanAction('celebrate');
+                saveGameState();
+            }
         });
+
+        menuBtn.addEventListener('click', pauseGame);
+        closeMenuBtn.addEventListener('click', resumeGame);
 
         toggleMusicBtn.addEventListener('click', () => {
             musicEnabled = !musicEnabled;
             localStorage.setItem('bb_music', JSON.stringify(musicEnabled));
             syncSettingUI();
-            if (!musicEnabled && audioCtx) audioCtx.suspend();
-            if (musicEnabled && audioCtx && !isPaused) audioCtx.resume();
+            initAudio();
         });
 
         toggleSfxBtn.addEventListener('click', () => {
@@ -950,731 +1192,44 @@
         });
 
         restartGameBtn.addEventListener('click', () => {
-            resumeGame();
             settingsModal.classList.remove('active');
-            difficultyModal.classList.add('active');
+            clearSavedGame();
+            resetGameData();
         });
 
         modalRestartBtn.addEventListener('click', () => {
             gameOverModal.classList.remove('active');
-            difficultyModal.classList.add('active');
-        });
-
-        document.querySelectorAll('.difficulty-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const targetBtn = e.currentTarget;
-                gameDifficulty = targetBtn.dataset.diff;
-                localStorage.setItem('bb_difficulty', gameDifficulty);
-                difficultyModal.classList.remove('active');
-                updateDifficultyUI();
-                resetGame();
-            });
-        });
-
-        function playPlaceSound() {
-            if (!sfxEnabled || !audioCtx || isPaused) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(350, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(140, audioCtx.currentTime + 0.08);
-            
-            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
-            
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.08);
-        }
-
-        function playExplosionSound() {
-            if (!sfxEnabled || !audioCtx || isPaused) return;
-            const duration = 0.25;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(280, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + duration);
-
-            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            osc.start();
-            osc.stop(audioCtx.currentTime + duration);
-        }
-
-        function playStarSparkleSound() {
-            if (!sfxEnabled || !audioCtx || isPaused) return;
-            const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
-            notes.forEach((freq, idx) => {
-                setTimeout(() => {
-                    if (isPaused) return;
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-
-                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
-
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.15);
-                }, idx * 60);
-            });
-        }
-
-        function createGrid() {
-            gridElement.innerHTML = '';
-            for (let r = 0; r < BOARD_SIZE; r++) {
-                for (let c = 0; c < BOARD_SIZE; c++) {
-                    const cell = document.createElement('div');
-                    cell.classList.add('cell');
-                    cell.dataset.row = r;
-                    cell.dataset.col = c;
-                    gridElement.appendChild(cell);
-                }
-            }
-        }
-
-        function renderGrid() {
-            const cells = gridElement.querySelectorAll('.cell');
-            cells.forEach(cell => {
-                const r = parseInt(cell.dataset.row);
-                const c = parseInt(cell.dataset.col);
-                cell.className = 'cell';
-                if (grid[r][c] === 1) {
-                    cell.classList.add('filled', gridColors[r][c]);
-                }
-            });
-        }
-
-        function getRandomPiece() {
-            let pool;
-            if (gameDifficulty === 'easy') {
-                pool = VERY_EASY_POOL;
-            } else if (gameDifficulty === 'medium') {
-                pool = EASY_POOL;
-            } else {
-                pool = MEDIUM_POOL;
-            }
-            const piece = pool[Math.floor(Math.random() * pool.length)];
-            return JSON.parse(JSON.stringify(piece));
-        }
-
-        function renderPieceHolder(holder, piece) {
-            holder.innerHTML = '';
-            if (!piece) return;
-
-            const gridDiv = document.createElement('div');
-            gridDiv.className = 'piece-grid';
-            const rows = piece.shape.length;
-            const cols = piece.shape[0].length;
-
-            gridDiv.style.gridTemplateColumns = `repeat(${cols}, 14px)`;
-            gridDiv.style.gridTemplateRows = `repeat(${rows}, 14px)`;
-
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                    const block = document.createElement('div');
-                    if (piece.shape[r][c]) {
-                        block.className = `piece-block ${piece.color}`;
-                    }
-                    gridDiv.appendChild(block);
-                }
-            }
-            holder.appendChild(gridDiv);
-        }
-
-        function generateNewPieces() {
-            for (let i = 0; i < 3; i++) {
-                currentPieces[i] = getRandomPiece();
-            }
-            renderAllHolders();
-        }
-
-        function renderAllHolders() {
-            pieceHolders.forEach((holder, idx) => {
-                renderPieceHolder(holder, currentPieces[idx]);
-                if (currentPieces[idx]) {
-                    holder.classList.remove('disabled');
-                    holder.style.visibility = 'visible';
-                } else {
-                    holder.classList.add('disabled');
-                }
-            });
-            renderPieceHolder(holdHolder, heldPiece);
-            if (heldPiece) {
-                holdHolder.style.visibility = 'visible';
-            }
-            checkGameOver();
-        }
-
-        function triggerArmAnim(animClass, duration = 400) {
-            orangutanSvg.classList.remove('arms-move', 'arms-celebrate', 'arms-throw');
-            void orangutanSvg.offsetWidth;
-            orangutanSvg.classList.add(animClass);
-            setTimeout(() => {
-                orangutanSvg.classList.remove(animClass);
-            }, duration);
-        }
-
-        function triggerBananaEffect() {
-            let filledCells = [];
-            for (let r = 0; r < BOARD_SIZE; r++) {
-                for (let c = 0; c < BOARD_SIZE; c++) {
-                    if (grid[r][c] === 1) {
-                        filledCells.push({ r, c });
-                    }
-                }
-            }
-
-            if (filledCells.length === 0) return;
-
-            const bananaCount = Math.min(filledCells.length, Math.floor(Math.random() * 2) + 4);
-            const selectedCells = [];
-            
-            for (let i = 0; i < bananaCount; i++) {
-                if (filledCells.length === 0) break;
-                const randIdx = Math.floor(Math.random() * filledCells.length);
-                selectedCells.push(filledCells.splice(randIdx, 1)[0]);
-            }
-
-            const orangutanRect = orangutanSvg.getBoundingClientRect();
-            const startX = orangutanRect.left + orangutanRect.width / 2;
-            const startY = orangutanRect.top + orangutanRect.height / 2;
-
-            selectedCells.forEach((target, index) => {
-                setTimeout(() => {
-                    triggerArmAnim('arms-throw', 450);
-
-                    const targetCell = gridElement.querySelector(`.cell[data-row="${target.r}"][data-col="${target.c}"]`);
-                    if (!targetCell) return;
-
-                    const targetRect = targetCell.getBoundingClientRect();
-                    const targetX = targetRect.left + targetRect.width / 2;
-                    const targetY = targetRect.top + targetRect.height / 2;
-
-                    const banana = document.createElement('div');
-                    banana.className = 'flying-banana';
-                    banana.textContent = '🍌';
-                    banana.style.left = `${startX}px`;
-                    banana.style.top = `${startY}px`;
-                    document.body.appendChild(banana);
-
-                    requestAnimationFrame(() => {
-                        banana.style.transform = `translate(${targetX - startX}px, ${targetY - startY}px) scale(1.2) rotate(360deg)`;
-                    });
-
-                    setTimeout(() => {
-                        banana.remove();
-                        if (grid[target.r][target.c] === 1) {
-                            grid[target.r][target.c] = 0;
-                            gridColors[target.r][target.c] = null;
-                            targetCell.classList.add('exploding-cell');
-                            createSparks(targetCell);
-                            playExplosionSound();
-                            renderGrid();
-                            addScore(50);
-                        }
-                    }, 600);
-
-                }, index * 250);
-            });
-        }
-
-        function setupDragAndDrop() {
-            const allHolders = [...pieceHolders, holdHolder];
-
-            allHolders.forEach(holder => {
-                holder.addEventListener('pointerdown', (e) => {
-                    if (isPaused || difficultyModal.classList.contains('active')) return;
-                    const type = holder.dataset.type;
-                    const index = holder.dataset.index;
-
-                    let piece = type === 'main' ? currentPieces[index] : heldPiece;
-                    if (!piece) return;
-
-                    initAudio();
-
-                    let dragEl = holder.querySelector('.piece-grid').cloneNode(true);
-                    dragEl.classList.add('dragging');
-                    document.body.appendChild(dragEl);
-
-                    const cols = piece.shape[0].length;
-                    const rows = piece.shape.length;
-                    
-                    const cellSize = gridElement.clientWidth / 10;
-                    dragEl.style.gridTemplateColumns = `repeat(${cols}, ${cellSize}px)`;
-                    dragEl.style.gridTemplateRows = `repeat(${rows}, ${cellSize}px)`;
-
-                    if (type === 'main') {
-                        currentPieces[index] = null;
-                        renderPieceHolder(holder, null);
-                        holder.classList.add('disabled');
-                    } else {
-                        heldPiece = null;
-                        renderPieceHolder(holdHolder, null);
-                    }
-
-                    activeDrag = {
-                        holder,
-                        type,
-                        index: parseInt(index),
-                        piece,
-                        dragEl,
-                        cols,
-                        rows,
-                        cellSize
-                    };
-
-                    updateDragPosition(e);
-                });
-            });
-
-            window.addEventListener('pointermove', (e) => {
-                if (!activeDrag) return;
-                updateDragPosition(e);
-                highlightPreview(e);
-            });
-
-            window.addEventListener('pointerup', (e) => {
-                if (!activeDrag) return;
-                
-                clearPreview();
-                const dropped = tryPlacePiece(e);
-
-                if (!dropped) {
-                    if (activeDrag.type === 'main') {
-                        currentPieces[activeDrag.index] = activeDrag.piece;
-                    } else {
-                        heldPiece = activeDrag.piece;
-                    }
-                    renderAllHolders();
-                }
-
-                if (activeDrag.dragEl) {
-                    activeDrag.dragEl.remove();
-                }
-                activeDrag = null;
-                saveGameState();
-            });
-        }
-
-        function updateDragPosition(e) {
-            if (!activeDrag) return;
-            const { dragEl, cols, rows, cellSize } = activeDrag;
-            const width = cols * cellSize;
-            const height = rows * cellSize;
-
-            // Parmak/imleç tutulan şeklin tam orta üst kısmında kalacak şekilde,
-            // parmağın şekli kapatmasını engellemek için dikeyde parmağın biraz yukarısına konumlandırıldı.
-            const x = e.clientX - width / 2;
-            const y = e.clientY - height - 55;
-
-            dragEl.style.left = `${x}px`;
-            dragEl.style.top = `${y}px`;
-        }
-
-        function getBoardTargetCell(e) {
-            const gridRect = gridElement.getBoundingClientRect();
-            const { cols, rows, cellSize } = activeDrag;
-
-            const width = cols * cellSize;
-            const height = rows * cellSize;
-            
-            // Parmağın veya kalemin dokunduğu nokta üzerinden tam hassas merkez hesaplaması
-            const touchX = e.clientX;
-            const touchY = e.clientY - 55;
-
-            if (
-                touchX < gridRect.left - (cellSize * 0.7) ||
-                touchX > gridRect.right + (cellSize * 0.7) ||
-                touchY < gridRect.top - (cellSize * 0.7) ||
-                touchY > gridRect.bottom + (cellSize * 0.7)
-            ) {
-                return null;
-            }
-
-            const col = Math.round((touchX - gridRect.left - (width / 2) + (cellSize / 2)) / cellSize);
-            const row = Math.round((touchY - gridRect.top - (height / 2) + (cellSize / 2)) / cellSize);
-
-            return { row, col };
-        }
-
-        function canPlace(shape, startRow, startCol) {
-            for (let r = 0; r < shape.length; r++) {
-                for (let c = 0; c < shape[r].length; c++) {
-                    if (shape[r][c]) {
-                        const targetR = startRow + r;
-                        const targetC = startCol + c;
-                        if (
-                            targetR < 0 || targetR >= BOARD_SIZE ||
-                            targetC < 0 || targetC >= BOARD_SIZE ||
-                            grid[targetR][targetC] === 1
-                        ) {
-                            return false;
-                        }
-                    }
-                }
-            }
-            return true;
-        }
-
-        function highlightPreview(e) {
-            clearPreview();
-
-            const isOverHold = isPointerOverHold(e);
-            if (isOverHold && activeDrag.type === 'main' && canHold) {
-                holdHolder.style.background = 'rgba(56, 189, 248, 0.25)';
-                return;
-            } else {
-                holdHolder.style.background = 'rgba(56, 189, 248, 0.05)';
-            }
-
-            const target = getBoardTargetCell(e);
-            if (!target) return;
-
-            const { row, col } = target;
-            const { piece } = activeDrag;
-
-            if (canPlace(piece.shape, row, col)) {
-                for (let r = 0; r < piece.shape.length; r++) {
-                    for (let c = 0; c < piece.shape[r].length; c++) {
-                        if (piece.shape[r][c]) {
-                            const cell = gridElement.querySelector(`.cell[data-row="${row + r}"][data-col="${col + c}"]`);
-                            if (cell) cell.classList.add('preview', piece.color);
-                        }
-                    }
-                }
-            }
-        }
-
-        function clearPreview() {
-            const cells = gridElement.querySelectorAll('.cell');
-            cells.forEach(cell => {
-                cell.classList.remove('preview');
-                ALL_COLORS.forEach(cls => {
-                    if (!cell.classList.contains('filled')) {
-                        cell.classList.remove(cls);
-                    }
-                });
-            });
-        }
-
-        function isPointerOverHold(e) {
-            const rect = holdHolder.getBoundingClientRect();
-            const padding = 20;
-            return (
-                e.clientX >= rect.left - padding &&
-                e.clientX <= rect.right + padding &&
-                e.clientY >= rect.top - padding &&
-                e.clientY <= rect.bottom + padding
-            );
-        }
-
-        function tryPlacePiece(e) {
-            const { type, index, piece } = activeDrag;
-
-            if (type === 'main' && canHold && isPointerOverHold(e)) {
-                const temp = heldPiece;
-                heldPiece = piece;
-                currentPieces[index] = temp;
-                canHold = false;
-
-                if (currentPieces.every(p => p === null)) {
-                    generateNewPieces();
-                } else {
-                    renderAllHolders();
-                }
-                return true;
-            }
-
-            const target = getBoardTargetCell(e);
-            if (!target) return false;
-
-            const { row, col } = target;
-
-            if (canPlace(piece.shape, row, col)) {
-                let blockCount = 0;
-                for (let r = 0; r < piece.shape.length; r++) {
-                    for (let c = 0; c < piece.shape[r].length; c++) {
-                        if (piece.shape[r][c]) {
-                            grid[row + r][col + c] = 1;
-                            gridColors[row + r][col + c] = piece.color;
-                            blockCount++;
-                        }
-                    }
-                }
-
-                addScore(blockCount);
-
-                playPlaceSound();
-                triggerArmAnim('arms-move', 350);
-
-                canHold = true;
-                renderGrid();
-                checkLines();
-
-                if (currentPieces.every(p => p === null)) {
-                    generateNewPieces();
-                } else {
-                    renderAllHolders();
-                }
-
-                return true;
-            }
-
-            return false;
-        }
-
-        function checkLines() {
-            let fullRows = [];
-            let fullCols = [];
-
-            for (let r = 0; r < BOARD_SIZE; r++) {
-                if (grid[r].every(val => val === 1)) fullRows.push(r);
-            }
-
-            for (let c = 0; c < BOARD_SIZE; c++) {
-                let full = true;
-                for (let r = 0; r < BOARD_SIZE; r++) {
-                    if (grid[r][c] === 0) { full = false; break; }
-                }
-                if (full) fullCols.push(c);
-            }
-
-            const linesCleared = fullRows.length + fullCols.length;
-
-            if (linesCleared > 0) {
-                playExplosionSound();
-                triggerArmAnim('arms-celebrate', 1200);
-
-                let cellsToClear = new Set();
-
-                fullRows.forEach(r => {
-                    for (let c = 0; c < BOARD_SIZE; c++) cellsToClear.add(`${r},${c}`);
-                });
-                fullCols.forEach(c => {
-                    for (let r = 0; r < BOARD_SIZE; r++) cellsToClear.add(`${r},${c}`);
-                });
-
-                cellsToClear.forEach(key => {
-                    const [r, c] = key.split(',').map(Number);
-                    const cell = gridElement.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
-                    if (cell) {
-                        cell.classList.add('exploding-cell');
-                        createSparks(cell);
-                    }
-                });
-
-                setTimeout(() => {
-                    cellsToClear.forEach(key => {
-                        const [r, c] = key.split(',').map(Number);
-                        grid[r][c] = 0;
-                        gridColors[r][c] = null;
-                    });
-                    renderGrid();
-                    saveGameState();
-                    checkGameOver();
-                }, 250);
-
-                let earnedScore = linesCleared * 100 * linesCleared;
-                addScore(earnedScore);
-
-                if (linesCleared > 1) {
-                    comboElement.textContent = `COMBO x${linesCleared}!`;
-                    comboElement.style.opacity = '1';
-                    setTimeout(() => comboElement.style.opacity = '0', 1500);
-                }
-            }
-        }
-
-        function createSparks(cell) {
-            const rect = cell.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            const cellColor = window.getComputedStyle(cell).backgroundColor;
-
-            for (let i = 0; i < 8; i++) {
-                const spark = document.createElement('div');
-                spark.className = 'spark';
-                spark.style.backgroundColor = cellColor;
-                spark.style.color = cellColor;
-                spark.style.width = '6px';
-                spark.style.height = '6px';
-                spark.style.left = `${centerX}px`;
-                spark.style.top = `${centerY}px`;
-
-                const angle = (Math.PI * 2 / 8) * i + (Math.random() * 0.4 - 0.2);
-                const dist = 30 + Math.random() * 40;
-                
-                spark.style.setProperty('--tx', `${Math.cos(angle) * dist}px`);
-                spark.style.setProperty('--ty', `${Math.sin(angle) * dist}px`);
-
-                document.body.appendChild(spark);
-                setTimeout(() => spark.remove(), 650);
-            }
-        }
-
-        function addScore(pts) {
-            score += pts;
-            scoreElement.textContent = score;
-
-            if (score > bestScore) {
-                bestScore = score;
-                bestScoreElement.textContent = bestScore;
-                localStorage.setItem('block_breaker_best', bestScore);
-            }
-
-            if (Math.floor(score / 100) > lastCoinThreshold) {
-                const diff = Math.floor(score / 100) - lastCoinThreshold;
-                coins += diff * 10;
-                lastCoinThreshold = Math.floor(score / 100);
-                updateCoinsDisplay();
-            }
-
-            if (Math.floor(score / 3000) > lastBananaThreshold) {
-                lastBananaThreshold = Math.floor(score / 3000);
-                triggerBananaEffect();
-            }
-
-            saveGameState();
-        }
-
-        function updateCoinsDisplay() {
-            coinsElement.textContent = `🪙 ${coins}`;
-            rerollBtn.disabled = coins < 500;
-        }
-
-        function triggerLevelUpAnimation(customText, customSubtext) {
-            playStarSparkleSound();
-            levelOverlay.innerHTML = '';
-
-            for (let i = 0; i < 20; i++) {
-                const star = document.createElement('div');
-                star.className = 'shooting-star';
-                star.style.bottom = `${Math.random() * 15}%`;
-                star.style.left = `${Math.random() * 100}%`;
-                star.style.animationDelay = `${Math.random() * 0.7}s`;
-                levelOverlay.appendChild(star);
-            }
-
-            const textWrap = document.createElement('div');
-            textWrap.style.display = 'flex';
-            textWrap.style.flexDirection = 'column';
-            textWrap.style.alignItems = 'center';
-
-            const text = document.createElement('div');
-            text.className = 'level-up-text';
-            text.textContent = customText || 'BAŞLAYALIM!';
-            textWrap.appendChild(text);
-
-            if (customSubtext) {
-                const subtext = document.createElement('div');
-                subtext.className = 'level-subtext';
-                subtext.textContent = customSubtext;
-                textWrap.appendChild(subtext);
-            }
-
-            levelOverlay.appendChild(textWrap);
-
-            setTimeout(() => {
-                levelOverlay.innerHTML = '';
-            }, 2000);
-        }
-
-        rerollBtn.addEventListener('click', () => {
-            if (coins >= 500) {
-                coins -= 500;
-                updateCoinsDisplay();
-                generateNewPieces();
-                saveGameState();
-            }
-        });
-
-        function checkGameOver() {
-            let availablePieces = currentPieces.filter(p => p !== null);
-            if (heldPiece) availablePieces.push(heldPiece);
-
-            if (availablePieces.length === 0) return;
-
-            let canMove = false;
-
-            for (let piece of availablePieces) {
-                for (let r = 0; r < BOARD_SIZE; r++) {
-                    for (let c = 0; c < BOARD_SIZE; c++) {
-                        if (canPlace(piece.shape, r, c)) {
-                            canMove = true;
-                            break;
-                        }
-                    }
-                    if (canMove) break;
-                }
-                if (canMove) break;
-            }
-
-            if (!canMove) {
-                stopTimer();
-                clearSavedGame();
-                finalScoreElement.textContent = score;
-                finalTimeElement.textContent = updateTimerDisplay();
-                modalBestScoreElement.textContent = modalBestScoreElement.textContent = bestScore;
-                gameOverModal.classList.add('active');
-            }
-        }
-
-        function resetGame() {
             clearSavedGame();
+            resetGameData();
+        });
+
+        function resetGameData() {
             grid = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
             gridColors = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
             score = 0;
-            coins = 0;
             totalSeconds = 0;
             lastCoinThreshold = 0;
             lastBananaThreshold = 0;
-            scoreElement.textContent = 0;
-            updateCoinsDisplay();
+            isPaused = false;
             heldPiece = null;
             canHold = true;
+            scoreElement.textContent = score;
             updateTimerDisplay();
-            startTimer();
-            renderGrid();
+            initGrid();
             generateNewPieces();
-            
-            let labelText = 'LEVEL 1';
-            let subText = 'Usta İşi';
-            if (gameDifficulty === 'easy') {
-                subText = 'Kolay Seviye';
-            } else if (gameDifficulty === 'medium') {
-                subText = 'Orta Seviye';
-            } else {
-                subText = 'Usta İşi';
-            }
-
-            triggerLevelUpAnimation(labelText, subText);
-            saveGameState();
+            startTimer();
         }
 
-        function initGame() {
-            createGrid();
+        function initApp() {
+            initGrid();
             if (!loadGameState()) {
-                stopTimer();
-            } else {
-                difficultyModal.classList.remove('active');
+                generateNewPieces();
+                startTimer();
             }
-            setupDragAndDrop();
+            updateRerollButtonState();
         }
 
-        initGame();
+        initApp();
     </script>
 </body>
 </html>
