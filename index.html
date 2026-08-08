@@ -93,21 +93,59 @@
             opacity: 0;
         }
 
-        /* DANS EDEN MAYMUN ALANI */
-        .monkey-container {
+        /* YENİ GELİŞMİŞ MAYMUN KART TASARIMI VE ARM ANIMASYONU */
+        .monkey-stage {
             position: absolute;
-            top: -45px;
+            top: -55px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             z-index: 10;
-            animation: monkeyDance 0.6s infinite alternate ease-in-out;
             pointer-events: none;
         }
 
-        @keyframes monkeyDance {
-            0% { transform: translateX(-50%) translateY(0) rotate(-12deg) scale(1); }
-            100% { transform: translateX(-50%) translateY(-8px) rotate(12deg) scale(1.1); }
+        .monkey-character {
+            font-size: 44px;
+            position: relative;
+            display: inline-block;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+            animation: idleMonkey 1s infinite alternate ease-in-out;
+        }
+
+        .monkey-arm {
+            position: absolute;
+            right: -10px;
+            top: 15px;
+            font-size: 20px;
+            transform-origin: left center;
+            transition: transform 0.2s ease-out;
+        }
+
+        .monkey-character.throwing .monkey-arm {
+            animation: throwArm 0.5s ease-in-out;
+        }
+
+        @keyframes idleMonkey {
+            0% { transform: translateY(0) rotate(-4deg); }
+            100% { transform: translateY(-6px) rotate(4deg); }
+        }
+
+        @keyframes throwArm {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(-60deg) scale(1.3); }
+            100% { transform: rotate(20deg) scale(1); }
+        }
+
+        /* UÇAN MUZ ANİMASYONU */
+        .flying-banana {
+            position: fixed;
+            font-size: 28px;
+            z-index: 2500;
+            pointer-events: none;
+            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.2s ease;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
         }
 
         .game-board-wrapper {
@@ -115,7 +153,7 @@
             width: 100%;
             max-width: 420px;
             padding: 10px;
-            margin-top: 25px;
+            margin-top: 35px;
         }
         #grid {
             display: grid;
@@ -336,7 +374,7 @@
             margin-top: 8px;
         }
 
-        /* LEVEL UP ANİMASYON ÖĞELERİ */
+        /* LEVEL UP & YILDIZ ANİMASYONU ALANI */
         .level-up-container {
             position: fixed;
             inset: 0;
@@ -439,7 +477,12 @@
     <div id="combo" class="combo-badge">COMBO x2!</div>
 
     <div class="game-board-wrapper">
-        <div class="monkey-container" id="monkey">🐒</div>
+        <div class="monkey-stage">
+            <div class="monkey-character" id="monkey">
+                🐒
+                <span class="monkey-arm" id="monkey-arm">🦾</span>
+            </div>
+        </div>
         <div id="grid"></div>
     </div>
 
@@ -502,7 +545,7 @@
         let grid = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
         let gridColors = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
         let score = 0;
-        let coins = 0; // Oyun içi coin sıfırlanabilir hale getirildi
+        let coins = 0;
         let currentLevel = 1;
         let bestScore = parseInt(localStorage.getItem('block_breaker_best')) || 0;
         let lastCoinThreshold = 0;
@@ -522,7 +565,7 @@
         const pieceHolders = document.querySelectorAll('.piece-holder[data-type="main"]');
         const holdHolder = document.getElementById('hold-holder');
         const levelOverlay = document.getElementById('level-overlay');
-        const monkeyElement = document.getElementById('monkey');
+        const monkeyCharacter = document.getElementById('monkey');
         
         const settingsModal = document.getElementById('settings-modal');
         const toggleMusicBtn = document.getElementById('toggle-music');
@@ -539,7 +582,7 @@
         updateCoinsDisplay();
         syncSettingUI();
 
-        // Kademeli Şekil Veritabanı (Zorlaştırılmış Başlangıç Seviyesi Dahil)
+        // ARTIRILMIŞ ZORLUK DÜZEYİNE GÖRE ŞEKİL VERİTABANI
         const PIECES_EASY = [
             { shape: [[1, 1]], color: 'color-2' },
             { shape: [[1], [1]], color: 'color-2' },
@@ -547,22 +590,22 @@
             { shape: [[1], [1], [1]], color: 'color-3' },
             { shape: [[1, 1], [1, 1]], color: 'color-4' },
             { shape: [[1, 0], [1, 1]], color: 'color-6' },
-            { shape: [[0, 1], [1, 1]], color: 'color-6' }
+            { shape: [[1, 1, 1], [0, 1, 0]], color: 'color-7' } // T Şekli başlangıca dahil edildi
         ];
 
         const PIECES_MEDIUM = [
             { shape: [[1, 1, 1, 1]], color: 'color-8' },
             { shape: [[1], [1], [1], [1]], color: 'color-8' },
-            { shape: [[1, 1, 1], [0, 1, 0]], color: 'color-7' },
             { shape: [[1, 1, 1], [1, 0, 0]], color: 'color-1' },
             { shape: [[1, 1, 1], [0, 0, 1]], color: 'color-5' },
-            { shape: [[1, 1, 0], [0, 1, 1]], color: 'color-3' }
+            { shape: [[1, 1, 0], [0, 1, 1]], color: 'color-3' },
+            { shape: [[1, 1, 1], [1, 1, 1]], color: 'color-4' }
         ];
 
         const PIECES_HARD = [
             { shape: [[1, 1, 1, 1, 1]], color: 'color-7' },
             { shape: [[1], [1], [1], [1], [1]], color: 'color-7' },
-            { shape: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: 'color-5' },
+            { shape: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: 'color-5' }, // 3x3 Büyük Blok
             { shape: [[1, 1, 1], [1, 0, 1]], color: 'color-8' },
             { shape: [[1, 1, 1], [1, 1, 0]], color: 'color-4' },
             { shape: [[0, 1, 1], [1, 1, 1]], color: 'color-6' }
@@ -721,7 +764,26 @@
             osc.stop(audioCtx.currentTime + duration);
         }
 
-        // Yıldız Parlama / Işıltı Ses Efekti
+        // FARKLI MUZ FIRLATMA VE ISLIK SESİ
+        function playBananaThrowSound() {
+            if (!sfxEnabled || !audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.3);
+
+            gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.35);
+        }
+
         function playStarSparkleSound() {
             if (!sfxEnabled || !audioCtx) return;
             const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
@@ -758,11 +820,9 @@
         }
 
         function getRandomPieceForLevel() {
-            let pool = [...PIECES_EASY];
-            if (currentLevel >= 2) pool = pool.concat(PIECES_MEDIUM);
-            if (currentLevel >= 4) pool = pool.concat(PIECES_HARD);
+            let pool = [...PIECES_EASY, ...PIECES_MEDIUM];
+            if (currentLevel >= 2) pool = pool.concat(PIECES_HARD);
 
-            // Level arttıkça zor şekil gelme ihtimali yükseliyor
             const randomIndex = Math.floor(Math.random() * pool.length);
             return pool[randomIndex];
         }
@@ -1066,8 +1126,8 @@
             });
         }
 
+        // DEĞİŞİKLİK: ŞEKİL YERLEŞTİRİNCE PUAN VERİLMEZ (PUAN YALNIZCA PATLATILDIĞINDA GELİR)
         function placePiece(piece, startR, startC) {
-            let addedScore = 0;
             for (let r = 0; r < piece.shape.length; r++) {
                 for (let c = 0; c < piece.shape[0].length; c++) {
                     if (piece.shape[r][c]) {
@@ -1077,11 +1137,9 @@
                         gridColors[targetR][targetC] = piece.color;
                         const cell = getCellElement(targetR, targetC);
                         cell.className = `cell filled ${piece.color}`;
-                        addedScore += 10;
                     }
                 }
             }
-            updateScore(score + addedScore);
         }
 
         function getCellElement(r, c) {
@@ -1170,8 +1228,9 @@
                     }, 250);
                 });
 
-                let comboBonus = totalCleared * 100 * totalCleared;
-                updateScore(score + comboBonus);
+                // YALNIZCA PATLATILAN ÇİZGİLERDEN PUAN KAZANILIR
+                let pointsGained = clearSet.size * 15 + (totalCleared * 100);
+                updateScore(score + pointsGained);
 
                 if (totalCleared > 1) {
                     showCombo(totalCleared);
@@ -1187,15 +1246,10 @@
             }, 1200);
         }
 
-        // MAYMUN BONUSU: 3000 puanda bir rastgele 6 kareyi patlatır
+        // MAYMUN MUZ ATMA VE PATLATMA EFEKTİ (ANIMASYONLU & SESLİ)
         function triggerMonkeyBonus() {
-            monkeyElement.style.animation = 'none';
-            monkeyElement.offsetHeight; // reflow
-            monkeyElement.style.animation = 'monkeyDance 0.2s infinite alternate ease-in-out';
-
-            setTimeout(() => {
-                monkeyElement.style.animation = 'monkeyDance 0.6s infinite alternate ease-in-out';
-            }, 1500);
+            monkeyCharacter.classList.add('throwing');
+            playBananaThrowSound();
 
             let allCoords = [];
             for (let r = 0; r < BOARD_SIZE; r++) {
@@ -1203,33 +1257,63 @@
                     allCoords.push({ r, c });
                 }
             }
-
-            // Karıştır
             allCoords.sort(() => Math.random() - 0.5);
             let targets = allCoords.slice(0, 6);
 
-            playExplosionSound();
+            const monkeyRect = monkeyCharacter.getBoundingClientRect();
 
-            targets.forEach(target => {
-                const { r, c } = target;
-                grid[r][c] = 0;
-                gridColors[r][c] = null;
-                const cell = getCellElement(r, c);
-                cell.className = 'cell exploding-cell';
-                createFireworks(cell);
+            targets.forEach((target, i) => {
                 setTimeout(() => {
-                    cell.className = 'cell';
-                }, 300);
+                    const flyingBanana = document.createElement('div');
+                    flyingBanana.classList.add('flying-banana');
+                    flyingBanana.textContent = '🍌';
+
+                    const startX = monkeyRect.left + monkeyRect.width / 2;
+                    const startY = monkeyRect.top + monkeyRect.height / 2;
+
+                    flyingBanana.style.left = `${startX}px`;
+                    flyingBanana.style.top = `${startY}px`;
+
+                    document.body.appendChild(flyingBanana);
+
+                    const targetCell = getCellElement(target.r, target.c);
+                    const cellRect = targetCell.getBoundingClientRect();
+                    const destX = cellRect.left + cellRect.width / 2 - 14;
+                    const destY = cellRect.top + cellRect.height / 2 - 14;
+
+                    requestAnimationFrame(() => {
+                        flyingBanana.style.transform = `translate(${destX - startX}px, ${destY - startY}px) rotate(720deg) scale(1.2)`;
+                    });
+
+                    setTimeout(() => {
+                        flyingBanana.style.opacity = '0';
+                        setTimeout(() => flyingBanana.remove(), 200);
+
+                        grid[target.r][target.c] = 0;
+                        gridColors[target.r][target.c] = null;
+                        targetCell.className = 'cell exploding-cell';
+                        createFireworks(targetCell);
+                        playExplosionSound();
+
+                        setTimeout(() => {
+                            targetCell.className = 'cell';
+                        }, 300);
+
+                    }, 800);
+                }, i * 200);
             });
 
-            updateScore(score + 300); // Bonus Patlatma Puanı
+            setTimeout(() => {
+                monkeyCharacter.classList.remove('throwing');
+            }, 1500);
+
+            updateScore(score + 400); // Bonus Puanı
         }
 
-        // LEVEL ATLAMA VE YILDIZ ANİMASYONU
+        // LEVEL ATLAMA & YILDIZ ANİMASYONU
         function triggerLevelUpEffect(newLevel) {
             playStarSparkleSound();
 
-            // Kayan Yıldızlar
             for (let i = 0; i < 25; i++) {
                 const star = document.createElement('div');
                 star.classList.add('rising-star');
@@ -1240,7 +1324,6 @@
                 setTimeout(() => star.remove(), 2200);
             }
 
-            // Yazı Efekti
             const textEl = document.createElement('div');
             if (newLevel === 10) {
                 textEl.classList.add('congrats-text');
@@ -1258,7 +1341,7 @@
             score = newScore;
             scoreElement.textContent = score;
 
-            // 5000 puanda bir Level atlama
+            // 5000 Puanda Bir Level Atlama
             const calculatedLevel = Math.floor(score / 5000) + 1;
             if (calculatedLevel > currentLevel) {
                 currentLevel = calculatedLevel;
@@ -1266,7 +1349,7 @@
                 triggerLevelUpEffect(currentLevel);
             }
 
-            // 5000 puanda bir Coin kazanma
+            // 5000 Puanda Bir Coin Kazanma
             const currentCoinThreshold = Math.floor(score / 5000);
             if (currentCoinThreshold > lastCoinThreshold) {
                 const earnedCoins = (currentCoinThreshold - lastCoinThreshold) * 1000;
@@ -1275,7 +1358,7 @@
                 updateCoinsDisplay();
             }
 
-            // 3000 puanda bir Maymun Bonusu
+            // 3000 Puanda Bir Maymun Bonusu (Muz Fırlatma)
             const currentMonkeyThreshold = Math.floor(score / 3000);
             if (currentMonkeyThreshold > lastMonkeyBonusScore) {
                 lastMonkeyBonusScore = currentMonkeyThreshold;
@@ -1381,7 +1464,7 @@
             currentPieces = [null, null, null];
             heldPiece = null;
             canHold = true;
-            coins = 0; // SIFIRLANDI
+            coins = 0;
             currentLevel = 1;
             lastCoinThreshold = 0;
             lastMonkeyBonusScore = 0;
@@ -1393,6 +1476,9 @@
             updateHoldUI();
             spawnPieces();
             saveGameState();
+
+            // İLK BAŞLANGIÇ LEVEL 1 YILDIZ ANİMASYONU
+            triggerLevelUpEffect(1);
         }
 
         createBoard();
@@ -1400,6 +1486,7 @@
 
         if (!loadGameState()) {
             spawnPieces();
+            triggerLevelUpEffect(1);
         }
     </script>
 </body>
