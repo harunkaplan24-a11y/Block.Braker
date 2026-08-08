@@ -33,7 +33,7 @@
             padding: 15px 20px 5px 20px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
         }
         .score-container {
             display: flex;
@@ -61,9 +61,10 @@
             color: #f59e0b;
         }
         .time-value {
-            font-size: 20px;
+            font-size: 14px;
             font-weight: bold;
             color: #10b981;
+            margin-top: 2px;
         }
         .top-controls {
             width: 100%;
@@ -166,7 +167,7 @@
         .flying-banana {
             position: absolute;
             top: 20px;
-            left: 65px; /* Orangutanın sağ elinden başlar */
+            left: 65px;
             font-size: 52px;
             pointer-events: none;
             z-index: 100;
@@ -481,10 +482,7 @@
         <div class="score-container">
             <span class="score-label">Skor</span>
             <span id="score" class="score-value">0</span>
-        </div>
-        <div class="score-container" style="align-items: center;">
-            <span class="score-label">Süre</span>
-            <span id="timer" class="time-value">00:00</span>
+            <span id="timer" class="time-value">⏱️ 00:00</span>
         </div>
         <div class="score-container" style="align-items: center;">
             <span class="score-label">Level</span>
@@ -621,7 +619,6 @@
         let lastBananaThreshold = 0;
         let isPaused = false;
 
-        // Dakika/Süre Sayacı Değişkenleri
         let totalSeconds = 0;
         let gameTimerInterval = null;
 
@@ -659,6 +656,8 @@
         bestScoreElement.textContent = bestScore;
         updateCoinsDisplay();
         syncSettingUI();
+
+        const ALL_COLORS = ['color-1', 'color-2', 'color-3', 'color-4', 'color-5', 'color-6', 'color-7', 'color-8'];
 
         const PIECES_EASY = [
             { shape: [[1, 1]], color: 'color-2' },
@@ -722,7 +721,7 @@
             const mins = Math.floor(totalSeconds / 60);
             const secs = totalSeconds % 60;
             const formatted = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-            timerElement.textContent = formatted;
+            timerElement.textContent = `⏱️ ${formatted}`;
             return formatted;
         }
 
@@ -970,17 +969,15 @@
             checkGameOver();
         }
 
-        // Yalnızca kollara özel animasyon tetikleme fonksiyonu
         function triggerArmAnim(animClass, duration = 400) {
             orangutanSvg.classList.remove('arms-move', 'arms-celebrate', 'arms-throw');
-            void orangutanSvg.offsetWidth; // Reflow
+            void orangutanSvg.offsetWidth;
             orangutanSvg.classList.add(animClass);
             setTimeout(() => {
                 orangutanSvg.classList.remove(animClass);
             }, duration);
         }
 
-        // Sağ el pozisyonundan çıkan ve belirgin uçan muz animasyonu
         function triggerBananaEffect() {
             triggerArmAnim('arms-throw', 600);
             
@@ -1019,6 +1016,16 @@
                     dragEl.style.gridTemplateColumns = `repeat(${cols}, ${cellSize}px)`;
                     dragEl.style.gridTemplateRows = `repeat(${rows}, ${cellSize}px)`;
 
+                    // Seçildiği an ilgili kutunun görseli hemen temizlensin
+                    if (type === 'main') {
+                        currentPieces[index] = null;
+                        renderPieceHolder(holder, null);
+                        holder.classList.add('disabled');
+                    } else {
+                        heldPiece = null;
+                        renderPieceHolder(holdHolder, null);
+                    }
+
                     activeDrag = {
                         holder,
                         type,
@@ -1031,7 +1038,6 @@
                     };
 
                     updateDragPosition(e);
-                    holder.style.visibility = 'hidden';
                 });
             });
 
@@ -1048,7 +1054,13 @@
                 const dropped = tryPlacePiece(e);
 
                 if (!dropped) {
-                    activeDrag.holder.style.visibility = 'visible';
+                    // Yerleştirilemediyse parçayı geri iade et
+                    if (activeDrag.type === 'main') {
+                        currentPieces[activeDrag.index] = activeDrag.piece;
+                    } else {
+                        heldPiece = activeDrag.piece;
+                    }
+                    renderAllHolders();
                 }
 
                 if (activeDrag.dragEl) {
@@ -1146,7 +1158,14 @@
 
         function clearPreview() {
             const cells = gridElement.querySelectorAll('.cell');
-            cells.forEach(cell => cell.classList.remove('preview'));
+            cells.forEach(cell => {
+                cell.classList.remove('preview');
+                ALL_COLORS.forEach(cls => {
+                    if (!cell.classList.contains('filled')) {
+                        cell.classList.remove(cls);
+                    }
+                });
+            });
         }
 
         function isPointerOverHold(e) {
@@ -1188,12 +1207,6 @@
 
                 playPlaceSound();
                 triggerArmAnim('arms-move', 350);
-
-                if (type === 'main') {
-                    currentPieces[index] = null;
-                } else {
-                    heldPiece = null;
-                }
 
                 canHold = true;
                 renderGrid();
@@ -1320,7 +1333,6 @@
                 updateCoinsDisplay();
             }
 
-            // Her 3000 puanda bir elinden belirgin bir muz fırlatır
             if (Math.floor(score / 3000) > lastBananaThreshold) {
                 lastBananaThreshold = Math.floor(score / 3000);
                 triggerBananaEffect();
