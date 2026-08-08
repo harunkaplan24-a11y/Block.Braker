@@ -167,7 +167,6 @@
             100% { transform: rotate(0deg); }
         }
 
-        /* Dinamik Muz Animasyonu */
         .flying-banana {
             position: fixed;
             font-size: 38px;
@@ -415,7 +414,6 @@
             overflow: hidden;
         }
 
-        /* Kayan Yıldız Animasyonu */
         .shooting-star {
             position: absolute;
             width: 120px;
@@ -676,6 +674,58 @@
         let audioCtx = null;
         let ambientTimer = null;
 
+        function saveGameState() {
+            const state = {
+                grid,
+                gridColors,
+                score,
+                coins,
+                currentLevel,
+                totalSeconds,
+                lastCoinThreshold,
+                lastBananaThreshold,
+                currentPieces,
+                heldPiece,
+                canHold
+            };
+            localStorage.setItem('bb_saved_game', JSON.stringify(state));
+        }
+
+        function clearSavedGame() {
+            localStorage.removeItem('bb_saved_game');
+        }
+
+        function loadGameState() {
+            const saved = localStorage.getItem('bb_saved_game');
+            if (!saved) return false;
+
+            try {
+                const state = JSON.parse(saved);
+                grid = state.grid;
+                gridColors = state.gridColors;
+                score = state.score;
+                coins = state.coins;
+                currentLevel = state.currentLevel;
+                totalSeconds = state.totalSeconds;
+                lastCoinThreshold = state.lastCoinThreshold;
+                lastBananaThreshold = state.lastBananaThreshold;
+                currentPieces = state.currentPieces;
+                heldPiece = state.heldPiece;
+                canHold = state.canHold;
+
+                scoreElement.textContent = score;
+                levelElement.textContent = currentLevel;
+                updateCoinsDisplay();
+                updateTimerDisplay();
+                renderGrid();
+                renderAllHolders();
+                startTimer();
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
         function initAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -692,6 +742,7 @@
                 if (!isPaused) {
                     totalSeconds++;
                     updateTimerDisplay();
+                    saveGameState();
                 }
             }, 1000);
         }
@@ -1102,6 +1153,7 @@
                     activeDrag.dragEl.remove();
                 }
                 activeDrag = null;
+                saveGameState();
             });
         }
 
@@ -1236,14 +1288,19 @@
             const { row, col } = target;
 
             if (canPlace(piece.shape, row, col)) {
+                let blockCount = 0;
                 for (let r = 0; r < piece.shape.length; r++) {
                     for (let c = 0; c < piece.shape[r].length; c++) {
                         if (piece.shape[r][c]) {
                             grid[row + r][col + c] = 1;
                             gridColors[row + r][col + c] = piece.color;
+                            blockCount++;
                         }
                     }
                 }
+
+                // Şekli koyunca bloka karşılık gelen temel puanı ver
+                addScore(blockCount);
 
                 playPlaceSound();
                 triggerArmAnim('arms-move', 350);
@@ -1311,6 +1368,7 @@
                         gridColors[r][c] = null;
                     });
                     renderGrid();
+                    saveGameState();
                     checkGameOver();
                 }, 250);
 
@@ -1380,6 +1438,8 @@
                 lastBananaThreshold = Math.floor(score / 1500);
                 triggerBananaEffect();
             }
+
+            saveGameState();
         }
 
         function updateCoinsDisplay() {
@@ -1387,7 +1447,7 @@
             rerollBtn.disabled = coins < 500;
         }
 
-        function triggerLevelUpAnimation() {
+        function triggerLevelUpAnimation(customLevelText) {
             playStarSparkleSound();
             levelOverlay.innerHTML = '';
 
@@ -1402,7 +1462,7 @@
 
             const text = document.createElement('div');
             text.className = 'level-up-text';
-            text.textContent = `LEVEL ${currentLevel}!`;
+            text.textContent = customLevelText || `LEVEL ${currentLevel}!`;
             levelOverlay.appendChild(text);
 
             setTimeout(() => {
@@ -1415,6 +1475,7 @@
                 coins -= 500;
                 updateCoinsDisplay();
                 generateNewPieces();
+                saveGameState();
             }
         });
 
@@ -1441,6 +1502,7 @@
 
             if (!canMove) {
                 stopTimer();
+                clearSavedGame();
                 finalScoreElement.textContent = score;
                 finalTimeElement.textContent = updateTimerDisplay();
                 modalBestScoreElement.textContent = bestScore;
@@ -1449,10 +1511,11 @@
         }
 
         function resetGame() {
+            clearSavedGame();
             grid = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
             gridColors = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
             score = 0;
-            coins = 0; // Coin her oyun yenilendiğinde sıfırlanır
+            coins = 0;
             currentLevel = 1;
             totalSeconds = 0;
             lastCoinThreshold = 0;
@@ -1466,11 +1529,19 @@
             startTimer();
             renderGrid();
             generateNewPieces();
+            triggerLevelUpAnimation("LEVEL 1!");
+            saveGameState();
         }
 
-        createGrid();
-        resetGame();
-        setupDragAndDrop();
+        function initGame() {
+            createGrid();
+            if (!loadGameState()) {
+                resetGame();
+            }
+            setupDragAndDrop();
+        }
+
+        initGame();
     </script>
 </body>
 </html>
