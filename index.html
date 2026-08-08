@@ -964,7 +964,6 @@
             }, duration);
         }
 
-        // 4-5 Adet Muz Fırlatma ve Rastgele Kutuları Patlatma Efekti
         function triggerBananaEffect() {
             let filledCells = [];
             for (let r = 0; r < BOARD_SIZE; r++) {
@@ -977,7 +976,6 @@
 
             if (filledCells.length === 0) return;
 
-            // Rastgele 4 veya 5 muz at
             const bananaCount = Math.min(filledCells.length, Math.floor(Math.random() * 2) + 4);
             const selectedCells = [];
             
@@ -1364,7 +1362,6 @@
                 localStorage.setItem('block_breaker_best', bestScore);
             }
 
-            // Her 2500 Puanda Seviye Atla
             const newLevel = Math.floor(score / 2500) + 1;
             if (newLevel > currentLevel) {
                 currentLevel = newLevel;
@@ -1379,7 +1376,6 @@
                 updateCoinsDisplay();
             }
 
-            // Muz fırlatma eşiği
             if (Math.floor(score / 1500) > lastBananaThreshold) {
                 lastBananaThreshold = Math.floor(score / 1500);
                 triggerBananaEffect();
@@ -1391,12 +1387,10 @@
             rerollBtn.disabled = coins < 500;
         }
 
-        // Kayan Yıldızlar ile Seviye Atlama Efekti
         function triggerLevelUpAnimation() {
             playStarSparkleSound();
             levelOverlay.innerHTML = '';
 
-            // Ekranın üst bölgesinden kayan yıldızlar
             for (let i = 0; i < 18; i++) {
                 const star = document.createElement('div');
                 star.className = 'shooting-star';
@@ -1458,12 +1452,14 @@
             grid = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
             gridColors = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
             score = 0;
-            currentLevel = 1; // Başlangıç Level 1
+            coins = 0; // Coin her oyun yenilendiğinde sıfırlanır
+            currentLevel = 1;
             totalSeconds = 0;
             lastCoinThreshold = 0;
             lastBananaThreshold = 0;
             scoreElement.textContent = 0;
             levelElement.textContent = 1;
+            updateCoinsDisplay();
             heldPiece = null;
             canHold = true;
             updateTimerDisplay();
