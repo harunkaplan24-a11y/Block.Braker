@@ -410,14 +410,24 @@
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             transition: transform 0.1s, filter 0.2s;
             color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
         }
         .difficulty-btn:active { transform: scale(0.96); }
         .btn-easy { background: #059669; }
         .btn-medium { background: #d97706; }
         .btn-hard { background: #dc2626; }
+        
+        .diff-subtext {
+            font-size: 11px;
+            opacity: 0.85;
+            font-weight: normal;
+        }
 
         .level-up-container {
             position: fixed;
@@ -433,18 +443,18 @@
 
         .shooting-star {
             position: absolute;
-            width: 120px;
-            height: 2px;
-            background: linear-gradient(90deg, #facc15, transparent);
-            animation: shootStarUp 1.2s ease-out forwards;
-            filter: drop-shadow(0 0 8px #facc15);
+            width: 4px;
+            height: 120px;
+            background: linear-gradient(180deg, #facc15, #f59e0b, transparent);
+            animation: shootStarBottomToTop 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            filter: drop-shadow(0 0 10px #facc15);
             opacity: 0;
         }
 
-        @keyframes shootStarUp {
-            0% { transform: translate(0, 200px) rotate(-55deg) scaleX(0); opacity: 1; }
+        @keyframes shootStarBottomToTop {
+            0% { transform: translateY(500px) scaleY(0.3); opacity: 1; }
             50% { opacity: 1; }
-            100% { transform: translate(300px, -600px) rotate(-55deg) scaleX(1.8); opacity: 0; }
+            100% { transform: translateY(-700px) scaleY(2.2); opacity: 0; }
         }
 
         .level-up-text {
@@ -454,6 +464,17 @@
             text-shadow: 0 0 20px #eab308, 0 0 40px #ca8a04;
             animation: textPop 1.8s ease-out forwards;
             letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .level-subtext {
+            font-size: 22px;
+            font-weight: bold;
+            color: #38bdf8;
+            margin-top: 10px;
+            text-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+            animation: textPop 1.8s ease-out forwards;
+            letter-spacing: 1px;
         }
 
         @keyframes textPop {
@@ -493,7 +514,7 @@
         </div>
         <div class="score-container" style="align-items: center;">
             <span class="score-label">Zorluk</span>
-            <span id="difficulty-badge" class="level-value" style="font-size: 15px; color: #38bdf8;">Orta</span>
+            <span id="difficulty-badge" class="level-value" style="font-size: 15px; color: #059669;">Kolay</span>
         </div>
         <div class="score-container" style="align-items: center;">
             <span class="score-label">Coin</span>
@@ -575,14 +596,26 @@
 
     <div id="level-overlay" class="level-up-container"></div>
 
-    <!-- Zorluk Seçim Modalı (İlk Açılış ve Yeniden Başlatma) -->
+    <!-- Zorluk Seçim Modalı -->
     <div id="difficulty-modal" class="modal-overlay active">
         <div class="modal-card">
             <h2 class="modal-title">Zorluk Seç</h2>
             <div style="font-size: 13px; color: #94a3b8; margin-bottom: 20px;">Nasıl bir deneyim istersin?</div>
-            <button class="difficulty-btn btn-easy" data-diff="easy">🟢 Kolay (Çocuk Oyunu)</button>
-            <button class="difficulty-btn btn-medium" data-diff="medium">🟡 Orta (Dengeli)</button>
-            <button class="difficulty-btn btn-hard" data-diff="hard">🔴 Zor (Usta İşi)</button>
+            
+            <button class="difficulty-btn btn-easy" data-diff="easy">
+                <span>🟢 Kolay (Çocuk Oyunu)</span>
+                <span class="diff-subtext">Level 1</span>
+            </button>
+            
+            <button class="difficulty-btn btn-medium" data-diff="medium">
+                <span>🟡 Orta (Dengeli)</span>
+                <span class="diff-subtext">Level 1</span>
+            </button>
+            
+            <button class="difficulty-btn btn-hard" data-diff="hard">
+                <span>🔴 Zor (Usta İşi)</span>
+                <span class="diff-subtext">Level 1</span>
+            </button>
         </div>
     </div>
 
@@ -626,7 +659,7 @@
         let gridColors = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
         let score = 0;
         let coins = 0;
-        let gameDifficulty = localStorage.getItem('bb_difficulty') || 'medium'; // easy, medium, hard
+        let gameDifficulty = localStorage.getItem('bb_difficulty') || 'easy';
         let bestScore = parseInt(localStorage.getItem('block_breaker_best')) || 0;
         let lastCoinThreshold = 0;
         let lastBananaThreshold = 0;
@@ -673,7 +706,15 @@
 
         const ALL_COLORS = ['color-1', 'color-2', 'color-3', 'color-4', 'color-5', 'color-6', 'color-7', 'color-8'];
 
-        // Şekil Havuzları
+        const VERY_EASY_POOL = [
+            { shape: [[1]], color: 'color-3' },
+            { shape: [[1, 1]], color: 'color-2' },
+            { shape: [[1], [1]], color: 'color-2' },
+            { shape: [[1, 1, 1]], color: 'color-4' },
+            { shape: [[1], [1], [1]], color: 'color-4' },
+            { shape: [[1, 1], [1, 1]], color: 'color-5' }
+        ];
+
         const EASY_POOL = [
             { shape: [[1]], color: 'color-2' },
             { shape: [[1, 1]], color: 'color-3' },
@@ -715,9 +756,16 @@
         let ambientTimer = null;
 
         function updateDifficultyUI() {
-            if (gameDifficulty === 'easy') difficultyBadge.textContent = 'Kolay';
-            else if (gameDifficulty === 'medium') difficultyBadge.textContent = 'Orta';
-            else difficultyBadge.textContent = 'Zor';
+            if (gameDifficulty === 'easy') {
+                difficultyBadge.textContent = 'Kolay';
+                difficultyBadge.style.color = '#059669';
+            } else if (gameDifficulty === 'medium') {
+                difficultyBadge.textContent = 'Orta';
+                difficultyBadge.style.color = '#d97706';
+            } else {
+                difficultyBadge.textContent = 'Zor';
+                difficultyBadge.style.color = '#dc2626';
+            }
         }
 
         function saveGameState() {
@@ -751,7 +799,7 @@
                 gridColors = state.gridColors;
                 score = state.score;
                 coins = state.coins;
-                gameDifficulty = state.gameDifficulty || 'medium';
+                gameDifficulty = state.gameDifficulty || 'easy';
                 totalSeconds = state.totalSeconds;
                 lastCoinThreshold = state.lastCoinThreshold;
                 lastBananaThreshold = state.lastBananaThreshold;
@@ -914,7 +962,8 @@
 
         document.querySelectorAll('.difficulty-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                gameDifficulty = e.target.dataset.diff;
+                const targetBtn = e.currentTarget;
+                gameDifficulty = targetBtn.dataset.diff;
                 localStorage.setItem('bb_difficulty', gameDifficulty);
                 difficultyModal.classList.remove('active');
                 updateDifficultyUI();
@@ -1011,12 +1060,11 @@
         function getRandomPiece() {
             let pool;
             if (gameDifficulty === 'easy') {
-                pool = EASY_POOL;
+                pool = VERY_EASY_POOL;
             } else if (gameDifficulty === 'medium') {
-                pool = [...EASY_POOL, ...MEDIUM_POOL];
+                pool = EASY_POOL;
             } else {
-                // Zor mod
-                pool = [...MEDIUM_POOL, ...HARD_POOL];
+                pool = MEDIUM_POOL;
             }
             const piece = pool[Math.floor(Math.random() * pool.length)];
             return JSON.parse(JSON.stringify(piece));
@@ -1227,8 +1275,10 @@
             const width = cols * cellSize;
             const height = rows * cellSize;
 
+            // Parmak/imleç tutulan şeklin tam orta üst kısmında kalacak şekilde,
+            // parmağın şekli kapatmasını engellemek için dikeyde parmağın biraz yukarısına konumlandırıldı.
             const x = e.clientX - width / 2;
-            const y = e.clientY - height - 30;
+            const y = e.clientY - height - 55;
 
             dragEl.style.left = `${x}px`;
             dragEl.style.top = `${y}px`;
@@ -1241,20 +1291,21 @@
             const width = cols * cellSize;
             const height = rows * cellSize;
             
-            const pieceCenterX = e.clientX;
-            const pieceCenterY = e.clientY - (height / 2) - 30;
+            // Parmağın veya kalemin dokunduğu nokta üzerinden tam hassas merkez hesaplaması
+            const touchX = e.clientX;
+            const touchY = e.clientY - 55;
 
             if (
-                pieceCenterX < gridRect.left ||
-                pieceCenterX > gridRect.right ||
-                pieceCenterY < gridRect.top ||
-                pieceCenterY > gridRect.bottom
+                touchX < gridRect.left - (cellSize * 0.7) ||
+                touchX > gridRect.right + (cellSize * 0.7) ||
+                touchY < gridRect.top - (cellSize * 0.7) ||
+                touchY > gridRect.bottom + (cellSize * 0.7)
             ) {
                 return null;
             }
 
-            const col = Math.floor((pieceCenterX - gridRect.left - (width / 2) + (cellSize / 2)) / cellSize);
-            const row = Math.floor((pieceCenterY - gridRect.top - (height / 2) + (cellSize / 2)) / cellSize);
+            const col = Math.round((touchX - gridRect.left - (width / 2) + (cellSize / 2)) / cellSize);
+            const row = Math.round((touchY - gridRect.top - (height / 2) + (cellSize / 2)) / cellSize);
 
             return { row, col };
         }
@@ -1504,23 +1555,37 @@
             rerollBtn.disabled = coins < 500;
         }
 
-        function triggerLevelUpAnimation(customText) {
+        function triggerLevelUpAnimation(customText, customSubtext) {
             playStarSparkleSound();
             levelOverlay.innerHTML = '';
 
-            for (let i = 0; i < 18; i++) {
+            for (let i = 0; i < 20; i++) {
                 const star = document.createElement('div');
                 star.className = 'shooting-star';
-                star.style.bottom = `${Math.random() * 20}%`;
+                star.style.bottom = `${Math.random() * 15}%`;
                 star.style.left = `${Math.random() * 100}%`;
-                star.style.animationDelay = `${Math.random() * 0.8}s`;
+                star.style.animationDelay = `${Math.random() * 0.7}s`;
                 levelOverlay.appendChild(star);
             }
+
+            const textWrap = document.createElement('div');
+            textWrap.style.display = 'flex';
+            textWrap.style.flexDirection = 'column';
+            textWrap.style.alignItems = 'center';
 
             const text = document.createElement('div');
             text.className = 'level-up-text';
             text.textContent = customText || 'BAŞLAYALIM!';
-            levelOverlay.appendChild(text);
+            textWrap.appendChild(text);
+
+            if (customSubtext) {
+                const subtext = document.createElement('div');
+                subtext.className = 'level-subtext';
+                subtext.textContent = customSubtext;
+                textWrap.appendChild(subtext);
+            }
+
+            levelOverlay.appendChild(textWrap);
 
             setTimeout(() => {
                 levelOverlay.innerHTML = '';
@@ -1562,7 +1627,7 @@
                 clearSavedGame();
                 finalScoreElement.textContent = score;
                 finalTimeElement.textContent = updateTimerDisplay();
-                modalBestScoreElement.textContent = bestScore;
+                modalBestScoreElement.textContent = modalBestScoreElement.textContent = bestScore;
                 gameOverModal.classList.add('active');
             }
         }
@@ -1584,14 +1649,24 @@
             startTimer();
             renderGrid();
             generateNewPieces();
-            triggerLevelUpAnimation(gameDifficulty === 'easy' ? 'KOLAY MOD' : gameDifficulty === 'medium' ? 'ORTA MOD' : 'ZOR MOD');
+            
+            let labelText = 'LEVEL 1';
+            let subText = 'Usta İşi';
+            if (gameDifficulty === 'easy') {
+                subText = 'Kolay Seviye';
+            } else if (gameDifficulty === 'medium') {
+                subText = 'Orta Seviye';
+            } else {
+                subText = 'Usta İşi';
+            }
+
+            triggerLevelUpAnimation(labelText, subText);
             saveGameState();
         }
 
         function initGame() {
             createGrid();
             if (!loadGameState()) {
-                // Kayıt yoksa zorluk seçimi zaten aktif, zamanlayıcıyı bekletelim
                 stopTimer();
             } else {
                 difficultyModal.classList.remove('active');
