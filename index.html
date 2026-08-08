@@ -46,12 +46,17 @@
             letter-spacing: 1px;
         }
         .score-value {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: bold;
             color: #38bdf8;
         }
+        .level-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #a855f7;
+        }
         .coin-value {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: bold;
             color: #f59e0b;
         }
@@ -77,9 +82,8 @@
             gap: 6px;
             transition: background 0.2s;
         }
-        .icon-btn:active {
-            background: #334155;
-        }
+        .icon-btn:active { background: #334155; }
+
         .combo-badge {
             font-size: 13px;
             font-weight: bold;
@@ -88,11 +92,30 @@
             transition: opacity 0.3s;
             opacity: 0;
         }
+
+        /* DANS EDEN MAYMUN ALANI */
+        .monkey-container {
+            position: absolute;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 38px;
+            z-index: 10;
+            animation: monkeyDance 0.6s infinite alternate ease-in-out;
+            pointer-events: none;
+        }
+
+        @keyframes monkeyDance {
+            0% { transform: translateX(-50%) translateY(0) rotate(-12deg) scale(1); }
+            100% { transform: translateX(-50%) translateY(-8px) rotate(12deg) scale(1.1); }
+        }
+
         .game-board-wrapper {
             position: relative;
             width: 100%;
             max-width: 420px;
             padding: 10px;
+            margin-top: 25px;
         }
         #grid {
             display: grid;
@@ -114,13 +137,8 @@
             position: relative;
         }
 
-        .cell.filled {
-            box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.25);
-        }
-        .cell.preview {
-            opacity: 0.5;
-            transform: scale(0.95);
-        }
+        .cell.filled { box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.25); }
+        .cell.preview { opacity: 0.5; transform: scale(0.95); }
 
         .bottom-panel {
             width: 100%;
@@ -179,18 +197,10 @@
             border: 2px dashed #38bdf8;
             background: rgba(56, 189, 248, 0.05);
         }
-        .piece-holder.disabled {
-            opacity: 0.4;
-            pointer-events: none;
-        }
-        .piece-grid {
-            display: grid;
-            gap: 2px;
-        }
-        .piece-block {
-            border-radius: 3px;
-            box-shadow: inset 0 -1px 0 rgba(0,0,0,0.2);
-        }
+        .piece-holder.disabled { opacity: 0.4; pointer-events: none; }
+        .piece-grid { display: grid; gap: 2px; }
+        .piece-block { border-radius: 3px; box-shadow: inset 0 -1px 0 rgba(0,0,0,0.2); }
+        
         .dragging {
             position: fixed;
             pointer-events: none;
@@ -245,10 +255,7 @@
             pointer-events: none;
             transition: opacity 0.3s ease;
         }
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
         .modal-card {
             background: #1e293b;
             border: 1px solid #334155;
@@ -261,9 +268,7 @@
             transform: scale(0.8);
             transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .modal-overlay.active .modal-card {
-            transform: scale(1);
-        }
+        .modal-overlay.active .modal-card { transform: scale(1); }
         .modal-title {
             font-size: 24px;
             font-weight: 800;
@@ -301,10 +306,7 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        .toggle-btn.on {
-            background: #059669;
-            color: #ffffff;
-        }
+        .toggle-btn.on { background: #059669; color: #ffffff; }
 
         .menu-action-btn {
             background: #dc2626;
@@ -332,6 +334,61 @@
             border-radius: 12px;
             cursor: pointer;
             margin-top: 8px;
+        }
+
+        /* LEVEL UP ANİMASYON ÖĞELERİ */
+        .level-up-container {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .rising-star {
+            position: absolute;
+            font-size: 28px;
+            animation: riseUp 1.5s linear forwards;
+            bottom: -50px;
+        }
+
+        @keyframes riseUp {
+            0% { transform: translateY(0) scale(0.5) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-110vh) scale(1.5) rotate(360deg); opacity: 0; }
+        }
+
+        .level-up-text {
+            font-size: 48px;
+            font-weight: 900;
+            color: #facc15;
+            text-shadow: 0 0 20px #eab308, 0 0 40px #ca8a04;
+            animation: textPop 1.8s ease-out forwards;
+            letter-spacing: 2px;
+        }
+
+        .congrats-text {
+            font-size: 52px;
+            font-weight: 900;
+            color: #ec4899;
+            text-shadow: 0 0 20px #db2777, 0 0 40px #be185d;
+            animation: blinkCongrats 0.3s infinite alternate, textPop 2.5s ease-out forwards;
+            letter-spacing: 3px;
+        }
+
+        @keyframes blinkCongrats {
+            0% { color: #f43f5e; text-shadow: 0 0 25px #f43f5e; }
+            100% { color: #38bdf8; text-shadow: 0 0 25px #38bdf8; }
+        }
+
+        @keyframes textPop {
+            0% { transform: scale(0.2); opacity: 0; }
+            30% { transform: scale(1.2); opacity: 1; }
+            70% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
         }
 
         .spark {
@@ -362,6 +419,10 @@
             <span id="score" class="score-value">0</span>
         </div>
         <div class="score-container" style="align-items: center;">
+            <span class="score-label">Level</span>
+            <span id="level" class="level-value">1</span>
+        </div>
+        <div class="score-container" style="align-items: center;">
             <span class="score-label">Coin</span>
             <span id="coins" class="coin-value">🪙 0</span>
         </div>
@@ -378,6 +439,7 @@
     <div id="combo" class="combo-badge">COMBO x2!</div>
 
     <div class="game-board-wrapper">
+        <div class="monkey-container" id="monkey">🐒</div>
         <div id="grid"></div>
     </div>
 
@@ -399,6 +461,8 @@
             🔄 Şekil Değiştir (500 🪙)
         </button>
     </div>
+
+    <div id="level-overlay" class="level-up-container"></div>
 
     <div id="settings-modal" class="modal-overlay">
         <div class="modal-card">
@@ -438,15 +502,18 @@
         let grid = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
         let gridColors = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
         let score = 0;
-        let coins = parseInt(localStorage.getItem('block_breaker_coins')) || 0;
+        let coins = 0; // Oyun içi coin sıfırlanabilir hale getirildi
+        let currentLevel = 1;
         let bestScore = parseInt(localStorage.getItem('block_breaker_best')) || 0;
         let lastCoinThreshold = 0;
+        let lastMonkeyBonusScore = 0;
 
         let musicEnabled = JSON.parse(localStorage.getItem('bb_music') ?? 'true');
         let sfxEnabled = JSON.parse(localStorage.getItem('bb_sfx') ?? 'true');
 
         const gridElement = document.getElementById('grid');
         const scoreElement = document.getElementById('score');
+        const levelElement = document.getElementById('level');
         const coinsElement = document.getElementById('coins');
         const bestScoreElement = document.getElementById('best-score');
         const comboElement = document.getElementById('combo');
@@ -454,6 +521,8 @@
         const menuBtn = document.getElementById('menu-btn');
         const pieceHolders = document.querySelectorAll('.piece-holder[data-type="main"]');
         const holdHolder = document.getElementById('hold-holder');
+        const levelOverlay = document.getElementById('level-overlay');
+        const monkeyElement = document.getElementById('monkey');
         
         const settingsModal = document.getElementById('settings-modal');
         const toggleMusicBtn = document.getElementById('toggle-music');
@@ -470,21 +539,33 @@
         updateCoinsDisplay();
         syncSettingUI();
 
-        const PIECES = [
-            { shape: [[1]], color: 'color-1' },
+        // Kademeli Şekil Veritabanı (Zorlaştırılmış Başlangıç Seviyesi Dahil)
+        const PIECES_EASY = [
             { shape: [[1, 1]], color: 'color-2' },
             { shape: [[1], [1]], color: 'color-2' },
             { shape: [[1, 1, 1]], color: 'color-3' },
             { shape: [[1], [1], [1]], color: 'color-3' },
+            { shape: [[1, 1], [1, 1]], color: 'color-4' },
+            { shape: [[1, 0], [1, 1]], color: 'color-6' },
+            { shape: [[0, 1], [1, 1]], color: 'color-6' }
+        ];
+
+        const PIECES_MEDIUM = [
             { shape: [[1, 1, 1, 1]], color: 'color-8' },
             { shape: [[1], [1], [1], [1]], color: 'color-8' },
+            { shape: [[1, 1, 1], [0, 1, 0]], color: 'color-7' },
+            { shape: [[1, 1, 1], [1, 0, 0]], color: 'color-1' },
+            { shape: [[1, 1, 1], [0, 0, 1]], color: 'color-5' },
+            { shape: [[1, 1, 0], [0, 1, 1]], color: 'color-3' }
+        ];
+
+        const PIECES_HARD = [
             { shape: [[1, 1, 1, 1, 1]], color: 'color-7' },
             { shape: [[1], [1], [1], [1], [1]], color: 'color-7' },
-            { shape: [[1, 1], [1, 1]], color: 'color-4' },
             { shape: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: 'color-5' },
-            { shape: [[1, 0], [1, 1]], color: 'color-6' },
-            { shape: [[0, 1], [1, 1]], color: 'color-6' },
-            { shape: [[1, 1, 1], [0, 1, 0]], color: 'color-7' }
+            { shape: [[1, 1, 1], [1, 0, 1]], color: 'color-8' },
+            { shape: [[1, 1, 1], [1, 1, 0]], color: 'color-4' },
+            { shape: [[0, 1, 1], [1, 1, 1]], color: 'color-6' }
         ];
 
         let currentPieces = [null, null, null];
@@ -544,19 +625,13 @@
         }
 
         document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                pauseGameAndAudio();
-            }
+            if (document.hidden) pauseGameAndAudio();
         });
 
-        window.addEventListener('blur', () => {
-            pauseGameAndAudio();
-        });
+        window.addEventListener('blur', () => pauseGameAndAudio());
 
         function pauseGameAndAudio() {
-            if (audioCtx && audioCtx.state === 'running') {
-                audioCtx.suspend();
-            }
+            if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
         }
 
         window.addEventListener('focus', () => {
@@ -646,6 +721,29 @@
             osc.stop(audioCtx.currentTime + duration);
         }
 
+        // Yıldız Parlama / Işıltı Ses Efekti
+        function playStarSparkleSound() {
+            if (!sfxEnabled || !audioCtx) return;
+            const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+            notes.forEach((freq, idx) => {
+                setTimeout(() => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                }, idx * 70);
+            });
+        }
+
         function createBoard() {
             gridElement.innerHTML = '';
             for (let r = 0; r < BOARD_SIZE; r++) {
@@ -657,6 +755,16 @@
                     gridElement.appendChild(cell);
                 }
             }
+        }
+
+        function getRandomPieceForLevel() {
+            let pool = [...PIECES_EASY];
+            if (currentLevel >= 2) pool = pool.concat(PIECES_MEDIUM);
+            if (currentLevel >= 4) pool = pool.concat(PIECES_HARD);
+
+            // Level arttıkça zor şekil gelme ihtimali yükseliyor
+            const randomIndex = Math.floor(Math.random() * pool.length);
+            return pool[randomIndex];
         }
 
         function renderPiece(piece, container, cellSize = 16) {
@@ -683,7 +791,7 @@
         function spawnPieces() {
             for (let i = 0; i < 3; i++) {
                 if (!currentPieces[i]) {
-                    const randomPiece = PIECES[Math.floor(Math.random() * PIECES.length)];
+                    const randomPiece = getRandomPieceForLevel();
                     currentPieces[i] = randomPiece;
                     renderPiece(randomPiece, pieceHolders[i]);
                 }
@@ -707,11 +815,10 @@
             initAudio();
             if (coins >= 500) {
                 coins -= 500;
-                localStorage.setItem('block_breaker_coins', coins);
                 updateCoinsDisplay();
 
                 for (let i = 0; i < 3; i++) {
-                    const randomPiece = PIECES[Math.floor(Math.random() * PIECES.length)];
+                    const randomPiece = getRandomPieceForLevel();
                     currentPieces[i] = randomPiece;
                     renderPiece(randomPiece, pieceHolders[i]);
                 }
@@ -750,7 +857,6 @@
 
             if (e.cancelable) e.preventDefault();
 
-            // YENİ: Tutulduğu an aşağıdaki kutunun içini gizle
             holder.innerHTML = '';
 
             const clone = document.createElement('div');
@@ -895,7 +1001,6 @@
                 }
                 placed = true;
             } else {
-                // YENİ: Eğer tahtaya bırakılamadıysa, eski kutusuna geri çizilsin
                 renderPiece(activeDrag.piece, activeDrag.holderElement);
             }
 
@@ -1082,17 +1187,99 @@
             }, 1200);
         }
 
+        // MAYMUN BONUSU: 3000 puanda bir rastgele 6 kareyi patlatır
+        function triggerMonkeyBonus() {
+            monkeyElement.style.animation = 'none';
+            monkeyElement.offsetHeight; // reflow
+            monkeyElement.style.animation = 'monkeyDance 0.2s infinite alternate ease-in-out';
+
+            setTimeout(() => {
+                monkeyElement.style.animation = 'monkeyDance 0.6s infinite alternate ease-in-out';
+            }, 1500);
+
+            let allCoords = [];
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    allCoords.push({ r, c });
+                }
+            }
+
+            // Karıştır
+            allCoords.sort(() => Math.random() - 0.5);
+            let targets = allCoords.slice(0, 6);
+
+            playExplosionSound();
+
+            targets.forEach(target => {
+                const { r, c } = target;
+                grid[r][c] = 0;
+                gridColors[r][c] = null;
+                const cell = getCellElement(r, c);
+                cell.className = 'cell exploding-cell';
+                createFireworks(cell);
+                setTimeout(() => {
+                    cell.className = 'cell';
+                }, 300);
+            });
+
+            updateScore(score + 300); // Bonus Patlatma Puanı
+        }
+
+        // LEVEL ATLAMA VE YILDIZ ANİMASYONU
+        function triggerLevelUpEffect(newLevel) {
+            playStarSparkleSound();
+
+            // Kayan Yıldızlar
+            for (let i = 0; i < 25; i++) {
+                const star = document.createElement('div');
+                star.classList.add('rising-star');
+                star.textContent = ['⭐', '🌟', '✨', '💫'][Math.floor(Math.random() * 4)];
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.animationDelay = `${Math.random() * 0.8}s`;
+                levelOverlay.appendChild(star);
+                setTimeout(() => star.remove(), 2200);
+            }
+
+            // Yazı Efekti
+            const textEl = document.createElement('div');
+            if (newLevel === 10) {
+                textEl.classList.add('congrats-text');
+                textEl.textContent = '🎉 TEBRİKLER! 🎉';
+            } else {
+                textEl.classList.add('level-up-text');
+                textEl.textContent = `LEVEL ${newLevel}`;
+            }
+
+            levelOverlay.appendChild(textEl);
+            setTimeout(() => textEl.remove(), 2200);
+        }
+
         function updateScore(newScore) {
             score = newScore;
             scoreElement.textContent = score;
 
-            const currentThreshold = Math.floor(score / 5000);
-            if (currentThreshold > lastCoinThreshold) {
-                const earnedCoins = (currentThreshold - lastCoinThreshold) * 1000;
+            // 5000 puanda bir Level atlama
+            const calculatedLevel = Math.floor(score / 5000) + 1;
+            if (calculatedLevel > currentLevel) {
+                currentLevel = calculatedLevel;
+                levelElement.textContent = currentLevel;
+                triggerLevelUpEffect(currentLevel);
+            }
+
+            // 5000 puanda bir Coin kazanma
+            const currentCoinThreshold = Math.floor(score / 5000);
+            if (currentCoinThreshold > lastCoinThreshold) {
+                const earnedCoins = (currentCoinThreshold - lastCoinThreshold) * 1000;
                 coins += earnedCoins;
-                lastCoinThreshold = currentThreshold;
-                localStorage.setItem('block_breaker_coins', coins);
+                lastCoinThreshold = currentCoinThreshold;
                 updateCoinsDisplay();
+            }
+
+            // 3000 puanda bir Maymun Bonusu
+            const currentMonkeyThreshold = Math.floor(score / 3000);
+            if (currentMonkeyThreshold > lastMonkeyBonusScore) {
+                lastMonkeyBonusScore = currentMonkeyThreshold;
+                triggerMonkeyBonus();
             }
 
             if (score > bestScore) {
@@ -1104,7 +1291,6 @@
 
         function checkGameOver() {
             let canMove = false;
-
             const allAvailablePieces = [...currentPieces, heldPiece].filter(p => p !== null);
 
             for (let piece of allAvailablePieces) {
@@ -1134,10 +1320,13 @@
                 grid: grid,
                 gridColors: gridColors,
                 score: score,
+                coins: coins,
+                currentLevel: currentLevel,
                 currentPieces: currentPieces,
                 heldPiece: heldPiece,
                 canHold: canHold,
-                lastCoinThreshold: lastCoinThreshold
+                lastCoinThreshold: lastCoinThreshold,
+                lastMonkeyBonusScore: lastMonkeyBonusScore
             };
             localStorage.setItem('block_breaker_saved_state', JSON.stringify(state));
         }
@@ -1150,12 +1339,17 @@
                     grid = state.grid;
                     gridColors = state.gridColors;
                     score = state.score;
+                    coins = state.coins || 0;
+                    currentLevel = state.currentLevel || 1;
                     currentPieces = state.currentPieces;
                     heldPiece = state.heldPiece || null;
                     canHold = state.canHold ?? true;
                     lastCoinThreshold = state.lastCoinThreshold || 0;
+                    lastMonkeyBonusScore = state.lastMonkeyBonusScore || 0;
 
                     scoreElement.textContent = score;
+                    levelElement.textContent = currentLevel;
+                    updateCoinsDisplay();
 
                     for (let r = 0; r < BOARD_SIZE; r++) {
                         for (let c = 0; c < BOARD_SIZE; c++) {
@@ -1187,8 +1381,13 @@
             currentPieces = [null, null, null];
             heldPiece = null;
             canHold = true;
+            coins = 0; // SIFIRLANDI
+            currentLevel = 1;
             lastCoinThreshold = 0;
+            lastMonkeyBonusScore = 0;
 
+            levelElement.textContent = currentLevel;
+            updateCoinsDisplay();
             updateScore(0);
             createBoard();
             updateHoldUI();
