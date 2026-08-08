@@ -71,7 +71,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* Üst Kontrol Alanı (Zaman ve Menü Karşılıklı) */
         .top-controls {
             width: 100%;
             max-width: 450px;
@@ -159,7 +158,7 @@
             50% { transform: rotate(120deg); }
         }
 
-        .arms-throw .arm-right-group { animation: armThrowRight 0.6s ease-in-out; }
+        .arms-throw .arm-right-group { animation: armThrowRight 0.5s ease-in-out; }
 
         @keyframes armThrowRight {
             0% { transform: rotate(0deg); }
@@ -168,30 +167,14 @@
             100% { transform: rotate(0deg); }
         }
 
+        /* Dinamik Muz Animasyonu */
         .flying-banana {
-            position: absolute;
-            top: 20px;
-            left: 65px;
-            font-size: 52px;
+            position: fixed;
+            font-size: 38px;
             pointer-events: none;
-            z-index: 100;
-            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.6));
-            animation: bananaFly 1.1s cubic-bezier(0.15, 0.85, 0.35, 1.2) forwards;
-        }
-
-        @keyframes bananaFly {
-            0% {
-                transform: translate(0, 0) scale(0.4) rotate(0deg);
-                opacity: 0;
-            }
-            20% {
-                opacity: 1;
-                transform: translate(15px, 20px) scale(1.4) rotate(120deg);
-            }
-            100% {
-                transform: translate(-30px, 260px) scale(1) rotate(720deg);
-                opacity: 0;
-            }
+            z-index: 1500;
+            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.6));
+            transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s ease-in;
         }
 
         .game-board-wrapper {
@@ -432,17 +415,21 @@
             overflow: hidden;
         }
 
-        .rising-star {
+        /* Kayan Yıldız Animasyonu */
+        .shooting-star {
             position: absolute;
-            font-size: 32px;
-            animation: riseUp 1.6s ease-out forwards;
-            bottom: -50px;
-            filter: drop-shadow(0 0 10px #facc15);
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, #facc15, transparent);
+            animation: shootStar 1.2s ease-out forwards;
+            filter: drop-shadow(0 0 8px #facc15);
+            opacity: 0;
         }
 
-        @keyframes riseUp {
-            0% { transform: translateY(0) scale(0.5) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(-110vh) scale(1.6) rotate(360deg); opacity: 0; }
+        @keyframes shootStar {
+            0% { transform: translate(0, 0) rotate(-35deg) scaleX(0); opacity: 1; }
+            50% { opacity: 1; }
+            100% { transform: translate(-600px, 600px) rotate(-35deg) scaleX(1.8); opacity: 0; }
         }
 
         .level-up-text {
@@ -638,7 +625,6 @@
         const holdHolder = document.getElementById('hold-holder');
         const levelOverlay = document.getElementById('level-overlay');
         const orangutanSvg = document.getElementById('orangutan-svg');
-        const orangutanStage = document.getElementById('orangutan-stage');
         
         const settingsModal = document.getElementById('settings-modal');
         const menuTitle = document.getElementById('menu-title');
@@ -978,17 +964,70 @@
             }, duration);
         }
 
+        // 4-5 Adet Muz Fırlatma ve Rastgele Kutuları Patlatma Efekti
         function triggerBananaEffect() {
-            triggerArmAnim('arms-throw', 600);
-            
-            const banana = document.createElement('div');
-            banana.className = 'flying-banana';
-            banana.textContent = '🍌';
-            orangutanStage.appendChild(banana);
+            let filledCells = [];
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (grid[r][c] === 1) {
+                        filledCells.push({ r, c });
+                    }
+                }
+            }
 
-            setTimeout(() => {
-                banana.remove();
-            }, 1100);
+            if (filledCells.length === 0) return;
+
+            // Rastgele 4 veya 5 muz at
+            const bananaCount = Math.min(filledCells.length, Math.floor(Math.random() * 2) + 4);
+            const selectedCells = [];
+            
+            for (let i = 0; i < bananaCount; i++) {
+                if (filledCells.length === 0) break;
+                const randIdx = Math.floor(Math.random() * filledCells.length);
+                selectedCells.push(filledCells.splice(randIdx, 1)[0]);
+            }
+
+            const orangutanRect = orangutanSvg.getBoundingClientRect();
+            const startX = orangutanRect.left + orangutanRect.width / 2;
+            const startY = orangutanRect.top + orangutanRect.height / 2;
+
+            selectedCells.forEach((target, index) => {
+                setTimeout(() => {
+                    triggerArmAnim('arms-throw', 450);
+
+                    const targetCell = gridElement.querySelector(`.cell[data-row="${target.r}"][data-col="${target.c}"]`);
+                    if (!targetCell) return;
+
+                    const targetRect = targetCell.getBoundingClientRect();
+                    const targetX = targetRect.left + targetRect.width / 2;
+                    const targetY = targetRect.top + targetRect.height / 2;
+
+                    const banana = document.createElement('div');
+                    banana.className = 'flying-banana';
+                    banana.textContent = '🍌';
+                    banana.style.left = `${startX}px`;
+                    banana.style.top = `${startY}px`;
+                    document.body.appendChild(banana);
+
+                    requestAnimationFrame(() => {
+                        banana.style.transform = `translate(${targetX - startX}px, ${targetY - startY}px) scale(1.2) rotate(360deg)`;
+                    });
+
+                    setTimeout(() => {
+                        banana.remove();
+                        if (grid[target.r][target.c] === 1) {
+                            grid[target.r][target.c] = 0;
+                            gridColors[target.r][target.c] = null;
+                            targetCell.classList.add('exploding-cell');
+                            createSparks(targetCell);
+                            playExplosionSound();
+                            renderGrid();
+                            addScore(10);
+                        }
+                    }, 600);
+
+                }, index * 250);
+            });
         }
 
         function setupDragAndDrop() {
@@ -1325,7 +1364,8 @@
                 localStorage.setItem('block_breaker_best', bestScore);
             }
 
-            const newLevel = Math.floor(score / 1000) + 1;
+            // Her 2500 Puanda Seviye Atla
+            const newLevel = Math.floor(score / 2500) + 1;
             if (newLevel > currentLevel) {
                 currentLevel = newLevel;
                 levelElement.textContent = currentLevel;
@@ -1339,8 +1379,9 @@
                 updateCoinsDisplay();
             }
 
-            if (Math.floor(score / 3000) > lastBananaThreshold) {
-                lastBananaThreshold = Math.floor(score / 3000);
+            // Muz fırlatma eşiği
+            if (Math.floor(score / 1500) > lastBananaThreshold) {
+                lastBananaThreshold = Math.floor(score / 1500);
                 triggerBananaEffect();
             }
         }
@@ -1350,17 +1391,18 @@
             rerollBtn.disabled = coins < 500;
         }
 
+        // Kayan Yıldızlar ile Seviye Atlama Efekti
         function triggerLevelUpAnimation() {
             playStarSparkleSound();
             levelOverlay.innerHTML = '';
 
-            for (let i = 0; i < 30; i++) {
+            // Ekranın üst bölgesinden kayan yıldızlar
+            for (let i = 0; i < 18; i++) {
                 const star = document.createElement('div');
-                star.className = 'rising-star';
-                star.textContent = ['⭐', '🌟', '✨', '🎉', '💥'][Math.floor(Math.random() * 5)];
-                star.style.left = `${Math.random() * 90 + 5}%`;
-                star.style.animationDelay = `${Math.random() * 0.6}s`;
-                star.style.animationDuration = `${1.2 + Math.random() * 0.8}s`;
+                star.className = 'shooting-star';
+                star.style.top = `${Math.random() * 80}%`;
+                star.style.right = `${Math.random() * 40 - 20}%`;
+                star.style.animationDelay = `${Math.random() * 0.8}s`;
                 levelOverlay.appendChild(star);
             }
 
@@ -1416,7 +1458,7 @@
             grid = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
             gridColors = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
             score = 0;
-            currentLevel = 1;
+            currentLevel = 1; // Başlangıç Level 1
             totalSeconds = 0;
             lastCoinThreshold = 0;
             lastBananaThreshold = 0;
