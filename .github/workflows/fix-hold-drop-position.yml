@@ -1,0 +1,72 @@
+name: Fix hold drop hit detection
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix-hold-drop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update hold detection to use dragged shape position
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+
+          old = '''        function isPointerOverHold(e) {
+            const rect = holdHolder.getBoundingClientRect();
+            const padding = 20;
+            return (
+                e.clientX >= rect.left - padding &&
+                e.clientX <= rect.right + padding &&
+                e.clientY >= rect.top - padding &&
+                e.clientY <= rect.bottom + padding
+            );
+        }
+'''
+
+          new = '''        function isPointerOverHold(e) {
+            // Hold detection is based on the actual dragged shape position,
+            // not the user's finger/cursor. This prevents the bottom board
+            // row from accidentally triggering the hold box.
+            if (!activeDrag || !activeDrag.dragEl) return false;
+
+            const shapeRect = activeDrag.dragEl.getBoundingClientRect();
+            const holdRect = holdHolder.getBoundingClientRect();
+            const padding = 4;
+
+            const shapeCenterX = shapeRect.left + shapeRect.width / 2;
+            const shapeCenterY = shapeRect.top + shapeRect.height / 2;
+            const holdCenterX = holdRect.left + holdRect.width / 2;
+            const holdCenterY = holdRect.top + holdRect.height / 2;
+
+            return (
+                shapeCenterX >= holdRect.left - padding &&
+                shapeCenterX <= holdRect.right + padding &&
+                shapeCenterY >= holdRect.top - padding &&
+                shapeCenterY <= holdRect.bottom + padding
+            );
+        }
+'''
+
+          if old not in text:
+              raise SystemExit('Hold detection function not found; no changes made.')
+
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+      - name: Remove one-time workflow and commit
+        run: |
+          rm -f .github/workflows/fix-hold-drop-position.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Fix hold box detection using dragged shape position"
+          git push
