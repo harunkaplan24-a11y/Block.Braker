@@ -14,54 +14,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Apply game changes
+      - name: Apply resume game changes
         run: |
           python - <<'PY'
           from pathlib import Path
           path = Path('index.html')
           text = path.read_text(encoding='utf-8')
-
-          old_button = '<button id="modal-restart-btn" class="menu-action-btn" style="background:#0284c7">Yeniden Başla</button>'
-          new_button = '<button id="resume-game-btn" class="menu-action-btn" style="background:#059669">▶️ Kaldığın Yerden Devam Et — 10.000 🪙</button><button id="modal-restart-btn" class="menu-action-btn" style="background:#0284c7">Yeniden Başla</button>'
-          if 'id="resume-game-btn"' not in text:
-              if old_button not in text: raise SystemExit('game-over restart button not found')
-              text = text.replace(old_button, new_button, 1)
-
-          old_decl = "modalBestScoreElement=document.getElementById('modal-best-score'),modalRestartBtn=document.getElementById('modal-restart-btn');"
-          new_decl = "modalBestScoreElement=document.getElementById('modal-best-score'),modalRestartBtn=document.getElementById('modal-restart-btn'),resumeGameBtn=document.getElementById('resume-game-btn');"
-          if 'resumeGameBtn=document.getElementById' not in text:
-              if old_decl not in text: raise SystemExit('JS element declaration not found')
-              text = text.replace(old_decl, new_decl, 1)
-
-          old_listener = "modalRestartBtn.addEventListener('click',()=>{gameOverModal.classList.remove('active');difficultyModal.classList.add('active')});"
-          new_listener = "modalRestartBtn.addEventListener('click',()=>{gameOverModal.classList.remove('active');difficultyModal.classList.add('active')});resumeGameBtn.addEventListener('click',()=>{if(coins<10000)return;gameOverModal.classList.remove('active');if(!loadGameState())return;coins-=10000;updateCoinsDisplay();isPaused=false;startTimer();saveGameState();triggerArmAnim('arms-throw',700);setTimeout(()=>triggerBananaEffect(),350);setTimeout(()=>triggerBananaEffect(),2850);});"
-          if 'resumeGameBtn.addEventListener' not in text:
-              if old_listener not in text: raise SystemExit('game-over listener not found')
-              text = text.replace(old_listener, new_listener, 1)
-
-          old_update = 'function updateCoinsDisplay(){coinsElement.textContent=`🪙 ${coins}`;rerollBtn.disabled=coins<500}'
-          new_update = 'function updateCoinsDisplay(){coinsElement.textContent=`🪙 ${coins}`;rerollBtn.disabled=coins<500;if(typeof resumeGameBtn!==\'undefined\'&&resumeGameBtn)resumeGameBtn.disabled=coins<10000}'
-          if 'resumeGameBtn.disabled=coins<10000' not in text:
-              if old_update not in text: raise SystemExit('updateCoinsDisplay function not found')
-              text = text.replace(old_update, new_update, 1)
-
-          old_gameover = "function checkGameOver(){if(lineClearPending)return;let pieces=currentPieces.filter(p=>p!==null);if(heldPiece)pieces.push(heldPiece);if(!pieces.length)return;let move=false;for(const p of pieces){for(let r=0;r<BOARD_SIZE;r++){for(let c=0;c<BOARD_SIZE;c++){if(canPlace(p.shape,r,c)){move=true;break}}if(move)break}if(move)break}if(!move){stopTimer();clearSavedGame();finalScoreElement.textContent=score;finalTimeElement.textContent=updateTimerDisplay();modalBestScoreElement.textContent=bestScore;gameOverModal.classList.add('active')}}"
-          new_gameover = "function checkGameOver(){if(lineClearPending)return;let pieces=currentPieces.filter(p=>p!==null);if(heldPiece)pieces.push(heldPiece);if(!pieces.length)return;let move=false;for(const p of pieces){for(let r=0;r<BOARD_SIZE;r++){for(let c=0;c<BOARD_SIZE;c++){if(canPlace(p.shape,r,c)){move=true;break}}if(move)break}if(move)break}if(!move){stopTimer();saveGameState();finalScoreElement.textContent=score;finalTimeElement.textContent=updateTimerDisplay();modalBestScoreElement.textContent=bestScore;updateCoinsDisplay();gameOverModal.classList.add('active')}}"
-          if 'stopTimer();saveGameState();finalScoreElement.textContent=score' not in text:
-              if old_gameover not in text: raise SystemExit('checkGameOver function not found')
-              text = text.replace(old_gameover, new_gameover, 1)
-
-          path.write_text(text, encoding='utf-8')
+          text = text.replace('Kaldığın Yerden Devam Et — 10.000 🪙','Kaldığın Yerden Devam Et — 2.000 🪙')
+          text = text.replace('coins<10000','coins<2000')
+          text = text.replace('coins-=10000','coins-=2000')
+          old = "resumeGameBtn.addEventListener('click',()=>{if(coins<2000)return;gameOverModal.classList.remove('active');if(!loadGameState())return;coins-=2000;updateCoinsDisplay();isPaused=false;startTimer();saveGameState();triggerArmAnim('arms-throw',700);setTimeout(()=>triggerBananaEffect(),350);setTimeout(()=>triggerBananaEffect(),2850);});"
+          new = "resumeGameBtn.addEventListener('click',()=>{if(coins<2000)return;gameOverModal.classList.remove('active');if(!loadGameState())return;coins-=2000;updateCoinsDisplay();isPaused=false;startTimer();saveGameState();triggerArmAnim('arms-throw',700);for(let i=0;i<20;i++)setTimeout(()=>triggerBananaEffect(),350+i*180);});"
+          if old in text:
+              text=text.replace(old,new,1)
+          path.write_text(text,encoding='utf-8')
           PY
-
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "feat: add 10000 coin resume and 20 banana reward"
-            git push
-          fi
+          if git diff --cached --quiet; then echo "No changes to commit"; else git commit -m "fix: make resume 2000 coins and throw 20 bananas"; git push; fi
