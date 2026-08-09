@@ -1,0 +1,69 @@
+name: Fix continue button
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '.github/workflows/**'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch continue behavior
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          patch=r'''<script>
+          (()=>{
+            const install=()=>{
+              document.addEventListener('click',(ev)=>{
+                const el=ev.target.closest('button');
+                if(!el) return;
+                const txt=(el.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+                if(!txt.includes('kaldığın yerden devam et')) return;
+                ev.preventDefault(); ev.stopPropagation(); ev.stopImmediatePropagation();
+                const coinsEl=document.getElementById('coins');
+                let coins=parseInt((coinsEl?.textContent||'').replace(/[^0-9-]/g,''),10)||0;
+                if(coins<2000) return;
+                coins-=2000;
+                if(coinsEl) coinsEl.textContent='🪙 '+coins;
+                try{localStorage.setItem('coins',String(coins));}catch(e){}
+                document.querySelectorAll('.modal-overlay,.level-up-container').forEach(x=>x.classList.remove('active'));
+                document.querySelectorAll('.modal-overlay').forEach(x=>{x.style.display='none';x.style.pointerEvents='none';});
+                document.querySelectorAll('.action-buttons,.game-over-buttons,.continue-buttons').forEach(x=>{x.style.display='none';x.style.pointerEvents='none';});
+                const cells=[...document.querySelectorAll('#grid .cell.filled')];
+                for(const c of cells.sort(()=>Math.random()-.5).slice(0,20)){
+                  c.classList.add('exploding-cell');
+                  setTimeout(()=>{c.classList.remove('filled','exploding-cell');c.style.backgroundColor='';c.innerHTML='';},220);
+                }
+                const monkey=document.getElementById('orangutan-stage');
+                const throwBanana=()=>{
+                  if(typeof window.triggerBananaEffect==='function'){
+                    try{window.triggerBananaEffect(1);return;}catch(e){}
+                  }
+                  const b=document.createElement('div'); b.className='flying-banana'; b.textContent='🍌';
+                  const r=monkey?.getBoundingClientRect(); const x=(r?r.left+r.width/2:innerWidth/2), y=(r?r.top+r.height/2:80);
+                  b.style.left=x+'px'; b.style.top=y+'px'; document.body.appendChild(b);
+                  const dx=(Math.random()-.5)*innerWidth, dy=innerHeight*.45+Math.random()*innerHeight*.25;
+                  b.animate([{transform:'translate(0,0) rotate(0deg)',opacity:1},{transform:`translate(${dx}px,${dy}px) rotate(${360+Math.random()*360}deg)`,opacity:0}],{duration:850,easing:'cubic-bezier(.2,.7,.2,1)',fill:'forwards'}).finished.finally(()=>b.remove());
+                };
+                for(let i=0;i<20;i++) setTimeout(()=>{monkey?.classList.remove('arms-throw'); void monkey?.offsetWidth; monkey?.classList.add('arms-throw'); throwBanana();},i*120);
+              },true);
+            };
+            if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install,{once:true}); else install();
+          })();
+          </script>'''
+          s=s.replace('</body>',patch+'\n</body>',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          rm .github/workflows/fix-resume-20.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html .github/workflows/fix-resume-20.yml
+          git commit -m 'Fix continue to clear 20 blocks and throw bananas'
+          git push
