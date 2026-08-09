@@ -1,0 +1,74 @@
+name: Apply game polish
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch game
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+
+          # UI: add a dedicated one-piece rotate button next to reroll.
+          old='''<div class="action-buttons"><button id="reroll-btn" class="reroll-btn">🔄 Şekil Değiştir (500 🪙)</button></div>'''
+          new='''<div class="action-buttons"><button id="rotate-btn" class="reroll-btn rotate-btn">↻ Yön Değiştir (250 🪙)</button><button id="reroll-btn" class="reroll-btn">🔄 Şekil Değiştir (500 🪙)</button></div>'''
+          if old in s and 'id="rotate-btn"' not in s:
+              s=s.replace(old,new,1)
+
+          # UI styling for the new button and selection state.
+          old='.action-buttons .reroll-btn{width:100%;max-width:320px;justify-content:center}'
+          new='.action-buttons .reroll-btn{width:100%;max-width:320px;justify-content:center}.rotate-btn{background:#2563eb}.rotate-btn.selecting{background:#059669;box-shadow:0 0 0 2px rgba(52,211,153,.35)}.piece-holder.rotate-selectable{cursor:pointer;outline:2px solid #38bdf8;outline-offset:2px;animation:rotatePulse 1s ease-in-out infinite}.piece-holder.rotate-selectable::after{content:"↻";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border-radius:10px;background:rgba(15,23,42,.48);color:#fff;font-size:30px;font-weight:900;text-shadow:0 2px 8px rgba(0,0,0,.8);pointer-events:none}@keyframes rotatePulse{0%,100%{box-shadow:0 0 0 0 rgba(56,189,248,.12)}50%{box-shadow:0 0 0 4px rgba(56,189,248,.3)}}'
+          if old in s and 'rotatePulse' not in s:
+              s=s.replace(old,new,1)
+
+          # State and button reference.
+          s=s.replace('lineClearPending=false;','lineClearPending=false,rotateSelectionMode=false;',1)
+          s=s.replace('comboElement=document.getElementById(\'combo\'),rerollBtn=document.getElementById(\'reroll-btn\'),menuBtn=', 'comboElement=document.getElementById(\'combo\'),rerollBtn=document.getElementById(\'reroll-btn\'),rotateBtn=document.getElementById(\'rotate-btn\'),menuBtn=',1)
+
+          # Render selectable overlays without affecting normal play.
+          old="function renderPieceHolder(h,p){h.innerHTML='';if(!p)return;const g=document.createElement('div');g.className='piece-grid';"
+          new="function renderPieceHolder(h,p){h.innerHTML='';h.classList.remove('rotate-selectable');if(!p)return;const g=document.createElement('div');g.className='piece-grid';"
+          s=s.replace(old,new,1)
+          old_end="h.appendChild(g)}function generateNewPieces()"
+          new_end="h.appendChild(g);if(rotateSelectionMode&&h.dataset.type==='main')h.classList.add('rotate-selectable')}function generateNewPieces()"
+          s=s.replace(old_end,new_end,1)
+
+          # Select one main piece and rotate only that piece.
+          marker='function setupDragAndDrop(){'
+          rotate_fn='''function rotateShape(shape){const rows=shape.length,cols=shape[0].length,out=Array.from({length:cols},()=>Array(rows).fill(0));for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)out[c][rows-1-r]=shape[r][c];return out}function setRotateSelectionMode(active){rotateSelectionMode=active;rotateBtn.classList.toggle('selecting',active);rotateBtn.textContent=active?'↻ Bir Şekil Seç':'↻ Yön Değiştir (250 🪙)';renderAllHolders()}function selectPieceForRotation(index){if(!rotateSelectionMode)return;if(coins<250){setRotateSelectionMode(false);return}const p=currentPieces[index];if(!p)return;coins-=250;p.shape=rotateShape(p.shape);setRotateSelectionMode(false);updateCoinsDisplay();saveGameState()}rotateBtn.addEventListener('click',()=>{if(rotateSelectionMode){setRotateSelectionMode(false);return}if(coins>=250)setRotateSelectionMode(true)});'''
+          if 'function rotateShape(shape)' not in s:
+              s=s.replace(marker,rotate_fn+marker,1)
+
+          # Intercept pointerdown only while choosing a piece; normal drag stays unchanged.
+          old="const type=h.dataset.type,index=h.dataset.index,p=type==='main'?currentPieces[index]:heldPiece;if(!p)return;initAudio();"
+          new="const type=h.dataset.type,index=h.dataset.index;if(rotateSelectionMode&&type==='main'){e.preventDefault();e.stopPropagation();selectPieceForRotation(Number(index));return}const p=type==='main'?currentPieces[index]:heldPiece;if(!p)return;initAudio();"
+          s=s.replace(old,new,1)
+
+          # More bananas, shorter spacing, continuous linear flight, no visible pause.
+          s=s.replace('const bananaCount=Math.min(cells.length,5+Math.floor(Math.random()*2));','const bananaCount=Math.min(cells.length,10);',1)
+          s=s.replace('b.style.transition=\'transform 2600ms cubic-bezier(.2,.75,.25,1), opacity 180ms ease-out\';','b.style.transition=\'transform 1800ms linear, opacity 140ms linear\';',1)
+          s=s.replace('},i*650);','},i*220);',1)
+
+          # Make bananas slightly more visible.
+          s=s.replace('.flying-banana{position:fixed;font-size:44px;', '.flying-banana{position:fixed;font-size:50px;',1)
+
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit and remove temporary workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git rm .github/workflows/apply-game-polish.yml
+          git diff --cached --quiet && exit 0
+          git commit -m 'Add one-piece rotate and smoother banana animation'
+          git push
