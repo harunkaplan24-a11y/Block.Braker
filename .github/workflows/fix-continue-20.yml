@@ -1,0 +1,38 @@
+name: Fix continue to 20 bananas
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '.github/workflows/**'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch continue behavior
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old="resumeGameBtn.addEventListener('click',()=>{if(coins<2000)return;gameOverModal.classList.remove('active');if(!loadGameState())return;coins-=2000;updateCoinsDisplay();isPaused=false;startTimer();saveGameState();triggerArmAnim('arms-throw',700);for(let i=0;i<20;i++)setTimeout(()=>triggerBananaEffect(),350+i*180);});"
+          new="function throwResumeBanana(){const cells=[...gridElement.querySelectorAll('.cell.filled')];if(!cells.length)return;const cell=cells[Math.floor(Math.random()*cells.length)],o=orangutanSvg.getBoundingClientRect(),q=cell.getBoundingClientRect(),sx=o.left+o.width*.82,sy=o.top+o.height*.30,tx=q.left+q.width/2,ty=q.top+q.height/2,b=document.createElement('div');b.className='flying-banana';b.textContent='🍌';b.style.left=(sx-22)+'px';b.style.top=(sy-22)+'px';b.style.transform='translate(0,0) scale(.8) rotate(-20deg)';b.style.transition='transform 300ms linear,opacity 140ms linear';document.body.appendChild(b);requestAnimationFrame(()=>requestAnimationFrame(()=>{b.style.transform=`translate(${tx-sx}px,${ty-sy}px) scale(1.15) rotate(720deg)`;}));setTimeout(()=>{b.style.opacity='0';setTimeout(()=>b.remove(),180);},330)};"+old.replace("if(!loadGameState())return;","").replace("for(let i=0;i<20;i++)setTimeout(()=>triggerBananaEffect(),350+i*180);","for(let i=0;i<20;i++)setTimeout(()=>{triggerArmAnim('arms-throw',700);throwResumeBanana();},i*120);")
+          if old in s:
+              s=s.replace(old,new,1)
+          start=s.find("<script>\n(()=>{", s.find("resumeGameBtn.addEventListener"))
+          if start!=-1:
+              end=s.find("</script>",start)
+              if end!=-1:
+                  s=s[:start]+s[end+9:]
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html .github/workflows/fix-continue-20.yml
+          git commit -m 'Fix continue: 20 bananas without deleting blocks and resume game' || exit 0
+          git rm .github/workflows/fix-continue-20.yml
+          git commit -m 'Remove one-time continue fix workflow'
+          git push
