@@ -1,0 +1,79 @@
+name: Fix banana animation and app icon
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch game
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          s = s.replace('<link rel="icon" type="image/svg+xml" href="assets/block-breaker-cover.svg">', '<link rel="icon" type="image/svg+xml" href="assets/block-breaker-cover.svg?v=3">\n<link rel="apple-touch-icon" href="assets/block-breaker-cover.svg?v=3">\n<link rel="manifest" href="manifest.webmanifest?v=3">')
+
+          new_fn = r'''function triggerBananaEffect(){
+let cells=[];
+for(let r=0;r<BOARD_SIZE;r++)for(let c=0;c<BOARD_SIZE;c++)if(grid[r][c]===1)cells.push({r,c});
+if(cells.length<6)return;
+const sel=[];
+while(sel.length<6){const i=Math.floor(Math.random()*cells.length);sel.push(cells.splice(i,1)[0]);}
+const hand=document.querySelector('.arm-right-group circle:last-child')||orangutanSvg;
+const o=hand.getBoundingClientRect(),sx=o.left+o.width/2,sy=o.top+o.height/2;
+sel.forEach((t,i)=>setTimeout(()=>{
+const cell=gridElement.querySelector(`.cell[data-row="${t.r}"][data-col="${t.c}"]`);
+if(!cell||grid[t.r][t.c]!==1)return;
+triggerArmAnim('arms-throw',700);
+const q=cell.getBoundingClientRect(),tx=q.left+q.width/2,ty=q.top+q.height/2;
+const b=document.createElement('div');
+ b.className='flying-banana';b.textContent='🍌';b.style.left=`${sx-22}px`;b.style.top=`${sy-22}px`;b.style.opacity='1';document.body.appendChild(b);
+const dx=tx-(sx-22),dy=ty-(sy-22);
+const anim=b.animate([
+ {transform:'translate3d(0,0,0) rotate(-20deg) scale(.75)',opacity:0},
+ {transform:`translate3d(${dx*.18}px,${dy*.18-28}px,0) rotate(70deg) scale(1.05)`,opacity:1,offset:.18},
+ {transform:`translate3d(${dx*.55}px,${dy*.55-18}px,0) rotate(210deg) scale(1.15)`,opacity:1,offset:.55},
+ {transform:`translate3d(${dx}px,${dy}px,0) rotate(360deg) scale(1.2)`,opacity:1}
+ ],{duration:2600,easing:'cubic-bezier(.22,.61,.36,1)',fill:'forwards'});
+ anim.onfinish=()=>{b.remove();if(grid[t.r][t.c]===1){grid[t.r][t.c]=0;gridColors[t.r][t.c]=null;cell.classList.remove('filled',...ALL_COLORS);cell.classList.remove('exploding-cell');createSparks(cell);playExplosionSound();addScore(50);}};
+},i*700));
+}'''
+
+          pattern = r'function triggerBananaEffect\(\)\{.*?\}\nfunction setupDragAndDrop'
+          s2, n = re.subn(pattern, new_fn + '\nfunction setupDragAndDrop', s, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('triggerBananaEffect function not found')
+          p.write_text(s2, encoding='utf-8')
+          PY
+
+          cat > manifest.webmanifest <<'EOF'
+          {
+            "name": "Block Breaker",
+            "short_name": "Block Breaker",
+            "start_url": "./",
+            "display": "standalone",
+            "background_color": "#0f172a",
+            "theme_color": "#0f172a",
+            "icons": [
+              {"src":"assets/block-breaker-cover.svg?v=3","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}
+            ]
+          }
+          EOF
+
+      - name: Commit fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html manifest.webmanifest
+          git diff --cached --quiet && exit 0
+          git commit -m "Fix banana animation and app icon"
+          git push
