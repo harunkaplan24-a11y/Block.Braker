@@ -1,0 +1,91 @@
+name: Apply banana trajectory fix
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: ${{ !contains(github.event.head_commit.message, '[banana-fix]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch banana effect
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          s = s.replace(
+              ".flying-banana{position:fixed;font-size:44px;",
+              ".flying-banana{position:fixed;font-size:52px;"
+          )
+          s = s.replace(
+              "will-change:transform,opacity;transition:transform 1.35s cubic-bezier(.22,.61,.36,1),opacity .3s ease-in}",
+              "will-change:transform,opacity;opacity:1}")
+
+          new_fn = r'''function triggerBananaEffect(){
+            const cells=[];
+            for(let r=0;r<BOARD_SIZE;r++)for(let c=0;c<BOARD_SIZE;c++)if(grid[r][c]===1)cells.push({r,c});
+            if(!cells.length)return;
+            const count=Math.min(6,cells.length),sel=[];
+            sel.push(cells.splice(Math.floor(Math.random()*cells.length),1)[0]);
+            while(sel.length<count&&cells.length){
+              let bestIndex=0,bestScore=-1;
+              for(let i=0;i<cells.length;i++){
+                const candidate=cells[i];
+                const minDist=Math.min(...sel.map(t=>Math.abs(candidate.r-t.r)+Math.abs(candidate.c-t.c)));
+                const edgeBonus=(candidate.r===0||candidate.r===BOARD_SIZE-1||candidate.c===0||candidate.c===BOARD_SIZE-1)?1:0;
+                const score=minDist*10+edgeBonus+Math.random();
+                if(score>bestScore){bestScore=score;bestIndex=i;}
+              }
+              sel.push(cells.splice(bestIndex,1)[0]);
+            }
+            const o=orangutanSvg.getBoundingClientRect(),sx=o.left+o.width/2,sy=o.top+o.height/2;
+            sel.forEach((t,i)=>setTimeout(()=>{
+              triggerArmAnim('arms-throw',700);
+              const cell=gridElement.querySelector(`.cell[data-row="${t.r}"][data-col="${t.c}"]`);
+              if(!cell||grid[t.r][t.c]!==1)return;
+              const q=cell.getBoundingClientRect(),tx=q.left+q.width/2,ty=q.top+q.height/2;
+              const b=document.createElement('div');
+              b.className='flying-banana';b.textContent='🍌';
+              b.style.left=`${sx-26}px`;b.style.top=`${sy-26}px`;
+              document.body.appendChild(b);
+              const dx=tx-sx,dy=ty-sy,midX=dx*.5,midY=dy*.5-38;
+              const anim=b.animate([
+                {transform:'translate(0px,0px) scale(.65) rotate(-20deg)',opacity:.2},
+                {transform:`translate(${midX}px,${midY}px) scale(1.08) rotate(170deg)`,opacity:1},
+                {transform:`translate(${dx}px,${dy}px) scale(1) rotate(360deg)`,opacity:1}
+              ],{duration:1750,delay:0,easing:'cubic-bezier(.22,.61,.36,1)',fill:'forwards'});
+              anim.onfinish=()=>{
+                b.remove();
+                if(grid[t.r][t.c]===1){
+                  grid[t.r][t.c]=0;gridColors[t.r][t.c]=null;
+                  cell.classList.remove('filled',...ALL_COLORS);cell.classList.remove('exploding-cell');
+                  createSparks(cell);playExplosionSound();addScore(50);
+                }
+              };
+            },i*360));
+          }'''
+
+          pattern = r"function triggerBananaEffect\(\)\{.*?\n\}function setupDragAndDrop"
+          replacement = new_fn + "\nfunction setupDragAndDrop"
+          s2,n = re.subn(pattern,replacement,s,count=1,flags=re.S)
+          if n != 1:
+              raise SystemExit('triggerBananaEffect not found')
+          p.write_text(s2,encoding='utf-8')
+      - name: Commit and remove one-time workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html .github/workflows/apply-banana-fix.yml
+          git rm .github/workflows/apply-banana-fix.yml
+          git commit -m "Fix banana movement and occupied-cell targeting [banana-fix]"
+          git push
