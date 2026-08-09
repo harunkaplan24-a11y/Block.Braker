@@ -1,0 +1,1 @@
+Hard mode update requested: increase varied/small shape probability to 40% and expand shape variety to reduce repetitive patterns.
