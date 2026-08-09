@@ -1,0 +1,49 @@
+name: Fix banana count and level-up text
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply requested fixes
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          # Keep the existing level-up animation, but never show the
+          # secondary "difficulty increased" message.
+          s = s.replace('.level-subtext{font-size:22px;', '.level-subtext{display:none!important;font-size:22px;', 1)
+
+          # Monkey always throws 5 or 6 bananas when enough filled cells exist.
+          old = "while(cells.length&&targets.length<6){"
+          new = "const bananaCount=Math.min(cells.length,5+Math.floor(Math.random()*2));while(cells.length&&targets.length<bananaCount){"
+          if old not in s:
+              raise SystemExit('Banana target loop not found')
+          s = s.replace(old, new, 1)
+
+          p.write_text(s, encoding='utf-8')
+
+      - name: Commit and remove one-time workflow
+        run: |
+          rm -f .github/workflows/fix-banana-and-level-text.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "Keep banana count at five or six"
+          git push
