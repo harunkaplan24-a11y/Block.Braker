@@ -1,0 +1,39 @@
+name: Final continue fix
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '.github/workflows/**'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix continue to 20 bananas without deleting blocks
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old="""      const cells=[...document.querySelectorAll('#grid .cell.filled')];
+      for(const c of cells.sort(()=>Math.random()-.5).slice(0,20)){
+        c.classList.add('exploding-cell');
+        setTimeout(()=>{c.classList.remove('filled','exploding-cell');c.style.backgroundColor='';c.innerHTML='';},220);
+      }
+      const monkey=document.getElementById('orangutan-stage');"""
+          new="""      const monkey=document.getElementById('orangutan-stage');"""
+          if old in s:
+              s=s.replace(old,new,1)
+          s=s.replace("for(let i=0;i<15;i++) setTimeout(()=>{monkey?.classList.remove('arms-throw'); void monkey?.offsetWidth; monkey?.classList.add('arms-throw'); throwBanana();},i*120);","for(let i=0;i<20;i++) setTimeout(()=>{monkey?.classList.remove('arms-throw'); void monkey?.offsetWidth; monkey?.classList.add('arms-throw'); throwBanana();},i*120);")
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html .github/workflows/fix-continue-final.yml
+          git commit -m 'Fix continue: 20 bananas and preserve all blocks' || exit 0
+          git rm .github/workflows/fix-continue-final.yml
+          git commit -m 'Remove final continue fix workflow'
+          git push
