@@ -1,4 +1,4 @@
-name: Apply hard mode shape balance fix
+name: Apply game fixes
 
 on:
   push:
@@ -8,27 +8,60 @@ permissions:
   contents: write
 
 jobs:
-  apply-fix:
+  apply-fixes:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Balance hard difficulty shapes
+      - name: Apply game changes
         run: |
           python - <<'PY'
           from pathlib import Path
           path = Path('index.html')
           text = path.read_text(encoding='utf-8')
-          start = text.find('function getRandomPiece(){')
-          end = text.find('function renderPieceHolder', start)
-          if start == -1 or end == -1: raise SystemExit('getRandomPiece function not found')
-          new = '''function getRandomPiece(){let p;if(gameDifficulty==='hard'){const level=Math.min(currentLevel,6);let base=HARD_POOL.slice(0,Math.min(HARD_POOL.length,7+level));if(level>=2)base=base.concat(HARD_POOL.slice(3,7));if(level>=3)base=base.concat(LEVEL_SHAPES.slice(0,2));if(level>=4)base=base.concat(HARD_POOL.slice(7));if(level>=5)base=base.concat(LEVEL_SHAPES.slice(2,5));if(level>=6)base=base.concat(LEVEL_SHAPES.slice(5));const variedHardShapes=[{shape:[[1]],color:'color-1'},{shape:[[1]],color:'color-2'},{shape:[[1]],color:'color-3'},{shape:[[1]],color:'color-4'},{shape:[[1,1]],color:'color-1'},{shape:[[1,1]],color:'color-3'},{shape:[[1,1]],color:'color-4'},{shape:[[1],[1]],color:'color-2'},{shape:[[1],[1]],color:'color-5'},{shape:[[1,1,1]],color:'color-2'},{shape:[[1,1,1]],color:'color-4'},{shape:[[1],[1],[1]],color:'color-3'},{shape:[[1],[1],[1]],color:'color-5'},{shape:[[1,1],[1,0]],color:'color-1'},{shape:[[1,1],[0,1]],color:'color-2'},{shape:[[1,0],[1,1]],color:'color-3'},{shape:[[0,1],[1,1]],color:'color-4'},{shape:[[1,1],[1,1]],color:'color-5'},{shape:[[1,1,1],[0,1,0]],color:'color-6'},{shape:[[1,0,1],[1,1,1]],color:'color-7'},{shape:[[1,1,0],[0,1,1]],color:'color-8'},{shape:[[1,1,1],[1,0,0]],color:'color-1'},{shape:[[1,1,1],[0,0,1]],color:'color-2'},{shape:[[1,0],[1,1],[0,1]],color:'color-3'},{shape:[[0,1],[1,1],[1,0]],color:'color-4'},{shape:[[1,1],[1,0],[1,0]],color:'color-5'},{shape:[[1,1],[0,1],[0,1]],color:'color-6'},{shape:[[1,1,0],[1,1,1]],color:'color-7'},{shape:[[1,1,1,1]],color:'color-8'},{shape:[[1],[1],[1],[1]],color:'color-8'},{shape:[[1,1,1],[1,1,0]],color:'color-1'},{shape:[[1,1,1],[0,1,1]],color:'color-2'},{shape:[[1,1],[1,1],[1,0]],color:'color-3'},{shape:[[1,1],[1,1],[0,1]],color:'color-4'},{shape:[[1,0,0],[1,1,1]],color:'color-5'},{shape:[[0,0,1],[1,1,1]],color:'color-6'},{shape:[[1,1,1,0],[0,0,1,1]],color:'color-7'},{shape:[[0,1,1,1],[1,1,0,0]],color:'color-8'},{shape:[[1,1,0],[0,1,1],[0,1,0]],color:'color-1'},{shape:[[0,1,0],[1,1,1],[0,1,0]],color:'color-2'}];if(Math.random()<0.40){let i=Math.floor(Math.random()*variedHardShapes.length),last=window.__lastHardShapeIndex;if(variedHardShapes.length>1&&i===last)i=(i+1+Math.floor(Math.random()*(variedHardShapes.length-1)))%variedHardShapes.length;window.__lastHardShapeIndex=i;p=[variedHardShapes[i]]}else p=base}else if(gameDifficulty==='medium'){const level=Math.min(currentLevel,6);let count=8+level;let base=MEDIUM_GAME_POOL.slice(0,Math.min(MEDIUM_GAME_POOL.length,count));if(level>=2)base=base.concat(LEVEL_SHAPES.slice(0,1));if(level>=3)base=base.concat(LEVEL_SHAPES.slice(1,2));if(level>=4)base=base.concat(MEDIUM_POOL.slice(4,6));if(level>=5)base=base.concat(LEVEL_SHAPES.slice(2,3));p=base}else{const level=Math.min(currentLevel,6);let base=VERY_EASY_POOL.slice();if(level>=2)base=base.concat(EASY_POOL.slice(1,6));if(level>=3)base=base.concat(EASY_POOL.slice(6));if(level>=4)base=base.concat(LEVEL_SHAPES.slice(0,2));if(level>=5)base=base.concat(LEVEL_SHAPES.slice(2,4));if(level>=6)base=base.concat(LEVEL_SHAPES.slice(4));p=base}return JSON.parse(JSON.stringify(p[Math.floor(Math.random()*p.length)]))}'''
-          path.write_text(text[:start]+new+text[end:],encoding='utf-8')
+
+          old_button = '<button id="modal-restart-btn" class="menu-action-btn" style="background:#0284c7">Yeniden Başla</button>'
+          new_button = '<button id="resume-game-btn" class="menu-action-btn" style="background:#059669">▶️ Kaldığın Yerden Devam Et — 10.000 🪙</button><button id="modal-restart-btn" class="menu-action-btn" style="background:#0284c7">Yeniden Başla</button>'
+          if 'id="resume-game-btn"' not in text:
+              if old_button not in text: raise SystemExit('game-over restart button not found')
+              text = text.replace(old_button, new_button, 1)
+
+          old_decl = "modalBestScoreElement=document.getElementById('modal-best-score'),modalRestartBtn=document.getElementById('modal-restart-btn');"
+          new_decl = "modalBestScoreElement=document.getElementById('modal-best-score'),modalRestartBtn=document.getElementById('modal-restart-btn'),resumeGameBtn=document.getElementById('resume-game-btn');"
+          if 'resumeGameBtn=document.getElementById' not in text:
+              if old_decl not in text: raise SystemExit('JS element declaration not found')
+              text = text.replace(old_decl, new_decl, 1)
+
+          old_listener = "modalRestartBtn.addEventListener('click',()=>{gameOverModal.classList.remove('active');difficultyModal.classList.add('active')});"
+          new_listener = "modalRestartBtn.addEventListener('click',()=>{gameOverModal.classList.remove('active');difficultyModal.classList.add('active')});resumeGameBtn.addEventListener('click',()=>{if(coins<10000)return;gameOverModal.classList.remove('active');if(!loadGameState())return;coins-=10000;updateCoinsDisplay();isPaused=false;startTimer();saveGameState();triggerArmAnim('arms-throw',700);setTimeout(()=>triggerBananaEffect(),350);setTimeout(()=>triggerBananaEffect(),2850);});"
+          if 'resumeGameBtn.addEventListener' not in text:
+              if old_listener not in text: raise SystemExit('game-over listener not found')
+              text = text.replace(old_listener, new_listener, 1)
+
+          old_update = 'function updateCoinsDisplay(){coinsElement.textContent=`🪙 ${coins}`;rerollBtn.disabled=coins<500}'
+          new_update = 'function updateCoinsDisplay(){coinsElement.textContent=`🪙 ${coins}`;rerollBtn.disabled=coins<500;if(typeof resumeGameBtn!==\'undefined\'&&resumeGameBtn)resumeGameBtn.disabled=coins<10000}'
+          if 'resumeGameBtn.disabled=coins<10000' not in text:
+              if old_update not in text: raise SystemExit('updateCoinsDisplay function not found')
+              text = text.replace(old_update, new_update, 1)
+
+          old_gameover = "function checkGameOver(){if(lineClearPending)return;let pieces=currentPieces.filter(p=>p!==null);if(heldPiece)pieces.push(heldPiece);if(!pieces.length)return;let move=false;for(const p of pieces){for(let r=0;r<BOARD_SIZE;r++){for(let c=0;c<BOARD_SIZE;c++){if(canPlace(p.shape,r,c)){move=true;break}}if(move)break}if(move)break}if(!move){stopTimer();clearSavedGame();finalScoreElement.textContent=score;finalTimeElement.textContent=updateTimerDisplay();modalBestScoreElement.textContent=bestScore;gameOverModal.classList.add('active')}}"
+          new_gameover = "function checkGameOver(){if(lineClearPending)return;let pieces=currentPieces.filter(p=>p!==null);if(heldPiece)pieces.push(heldPiece);if(!pieces.length)return;let move=false;for(const p of pieces){for(let r=0;r<BOARD_SIZE;r++){for(let c=0;c<BOARD_SIZE;c++){if(canPlace(p.shape,r,c)){move=true;break}}if(move)break}if(move)break}if(!move){stopTimer();saveGameState();finalScoreElement.textContent=score;finalTimeElement.textContent=updateTimerDisplay();modalBestScoreElement.textContent=bestScore;updateCoinsDisplay();gameOverModal.classList.add('active')}}"
+          if 'stopTimer();saveGameState();finalScoreElement.textContent=score' not in text:
+              if old_gameover not in text: raise SystemExit('checkGameOver function not found')
+              text = text.replace(old_gameover, new_gameover, 1)
+
+          path.write_text(text, encoding='utf-8')
           PY
-      - name: Commit fix
+
+      - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          if git diff --cached --quiet; then echo "No changes to commit"; else git commit -m "fix: make hard mode 40 percent varied shapes"; git push; fi
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "feat: add 10000 coin resume and 20 banana reward"
+            git push
+          fi
