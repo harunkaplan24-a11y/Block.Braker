@@ -18,33 +18,17 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-
           path = Path('index.html')
           text = path.read_text(encoding='utf-8')
-
-          old_start = 'function getRandomPiece(){'
-          start = text.find(old_start)
-          if start == -1:
-              raise SystemExit('getRandomPiece function not found')
-
+          start = text.find('function getRandomPiece(){')
           end = text.find('function renderPieceHolder', start)
-          if end == -1:
-              raise SystemExit('renderPieceHolder marker not found')
-
-          new = '''function getRandomPiece(){let p;if(gameDifficulty==='hard'){const level=Math.min(currentLevel,6);let base=HARD_POOL.slice(0,Math.min(HARD_POOL.length,7+level));if(level>=2)base=base.concat(HARD_POOL.slice(3,7));if(level>=3)base=base.concat(LEVEL_SHAPES.slice(0,2));if(level>=4)base=base.concat(HARD_POOL.slice(7));if(level>=5)base=base.concat(LEVEL_SHAPES.slice(2,5));if(level>=6)base=base.concat(LEVEL_SHAPES.slice(5));/* Zor seviyede büyük şekiller çoğunlukta; farklı küçük şekiller yaklaşık %20 oranında gelir. */const smallShapes=[{shape:[[1]],color:'color-1'},{shape:[[1]],color:'color-2'},{shape:[[1]],color:'color-3'},{shape:[[1]],color:'color-4'},{shape:[[1]],color:'color-5'},{shape:[[1,1]],color:'color-1'},{shape:[[1,1]],color:'color-3'},{shape:[[1,1]],color:'color-4'},{shape:[[1],[1]],color:'color-2'},{shape:[[1],[1]],color:'color-5'},{shape:[[1,1,1]],color:'color-2'},{shape:[[1,1,1]],color:'color-4'},{shape:[[1],[1],[1]],color:'color-3'},{shape:[[1],[1],[1]],color:'color-5'},{shape:[[1,1],[1,0]],color:'color-1'},{shape:[[1,1],[0,1]],color:'color-2'},{shape:[[1,0],[1,1]],color:'color-3'},{shape:[[0,1],[1,1]],color:'color-4'},{shape:[[1,1],[1,1]],color:'color-5'},{shape:[[1,1,1],[0,1,0]],color:'color-6'},{shape:[[1,0,1],[1,1,1]],color:'color-7'},{shape:[[1,1,0],[0,1,1]],color:'color-8'}];if(Math.random()<0.20){let i=Math.floor(Math.random()*smallShapes.length);if(smallShapes.length>1&&i===window.__lastHardSmallShape){i=(i+1+Math.floor(Math.random()*(smallShapes.length-1)))%smallShapes.length}window.__lastHardSmallShape=i;p=[smallShapes[i]]}else{p=base}}else if(gameDifficulty==='medium'){const level=Math.min(currentLevel,6);let count=8+level;let base=MEDIUM_GAME_POOL.slice(0,Math.min(MEDIUM_GAME_POOL.length,count));if(level>=2)base=base.concat(LEVEL_SHAPES.slice(0,1));if(level>=3)base=base.concat(LEVEL_SHAPES.slice(1,2));if(level>=4)base=base.concat(MEDIUM_POOL.slice(4,6));if(level>=5)base=base.concat(LEVEL_SHAPES.slice(2,3));p=base}else{const level=Math.min(currentLevel,6);let base=VERY_EASY_POOL.slice();if(level>=2)base=base.concat(EASY_POOL.slice(1,6));if(level>=3)base=base.concat(EASY_POOL.slice(6));if(level>=4)base=base.concat(LEVEL_SHAPES.slice(0,2));if(level>=5)base=base.concat(LEVEL_SHAPES.slice(2,4));if(level>=6)base=base.concat(LEVEL_SHAPES.slice(4));p=base}return JSON.parse(JSON.stringify(p[Math.floor(Math.random()*p.length)]))}'''
-
-          text = text[:start] + new + text[end:]
-          path.write_text(text, encoding='utf-8')
+          if start == -1 or end == -1: raise SystemExit('getRandomPiece function not found')
+          new = '''function getRandomPiece(){let p;if(gameDifficulty==='hard'){const level=Math.min(currentLevel,6);let base=HARD_POOL.slice(0,Math.min(HARD_POOL.length,7+level));if(level>=2)base=base.concat(HARD_POOL.slice(3,7));if(level>=3)base=base.concat(LEVEL_SHAPES.slice(0,2));if(level>=4)base=base.concat(HARD_POOL.slice(7));if(level>=5)base=base.concat(LEVEL_SHAPES.slice(2,5));if(level>=6)base=base.concat(LEVEL_SHAPES.slice(5));const variedHardShapes=[{shape:[[1]],color:'color-1'},{shape:[[1]],color:'color-2'},{shape:[[1]],color:'color-3'},{shape:[[1]],color:'color-4'},{shape:[[1,1]],color:'color-1'},{shape:[[1,1]],color:'color-3'},{shape:[[1,1]],color:'color-4'},{shape:[[1],[1]],color:'color-2'},{shape:[[1],[1]],color:'color-5'},{shape:[[1,1,1]],color:'color-2'},{shape:[[1,1,1]],color:'color-4'},{shape:[[1],[1],[1]],color:'color-3'},{shape:[[1],[1],[1]],color:'color-5'},{shape:[[1,1],[1,0]],color:'color-1'},{shape:[[1,1],[0,1]],color:'color-2'},{shape:[[1,0],[1,1]],color:'color-3'},{shape:[[0,1],[1,1]],color:'color-4'},{shape:[[1,1],[1,1]],color:'color-5'},{shape:[[1,1,1],[0,1,0]],color:'color-6'},{shape:[[1,0,1],[1,1,1]],color:'color-7'},{shape:[[1,1,0],[0,1,1]],color:'color-8'},{shape:[[1,1,1],[1,0,0]],color:'color-1'},{shape:[[1,1,1],[0,0,1]],color:'color-2'},{shape:[[1,0],[1,1],[0,1]],color:'color-3'},{shape:[[0,1],[1,1],[1,0]],color:'color-4'},{shape:[[1,1],[1,0],[1,0]],color:'color-5'},{shape:[[1,1],[0,1],[0,1]],color:'color-6'},{shape:[[1,1,0],[1,1,1]],color:'color-7'},{shape:[[1,1,1,1]],color:'color-8'},{shape:[[1],[1],[1],[1]],color:'color-8'},{shape:[[1,1,1],[1,1,0]],color:'color-1'},{shape:[[1,1,1],[0,1,1]],color:'color-2'},{shape:[[1,1],[1,1],[1,0]],color:'color-3'},{shape:[[1,1],[1,1],[0,1]],color:'color-4'},{shape:[[1,0,0],[1,1,1]],color:'color-5'},{shape:[[0,0,1],[1,1,1]],color:'color-6'},{shape:[[1,1,1,0],[0,0,1,1]],color:'color-7'},{shape:[[0,1,1,1],[1,1,0,0]],color:'color-8'},{shape:[[1,1,0],[0,1,1],[0,1,0]],color:'color-1'},{shape:[[0,1,0],[1,1,1],[0,1,0]],color:'color-2'}];if(Math.random()<0.40){let i=Math.floor(Math.random()*variedHardShapes.length),last=window.__lastHardShapeIndex;if(variedHardShapes.length>1&&i===last)i=(i+1+Math.floor(Math.random()*(variedHardShapes.length-1)))%variedHardShapes.length;window.__lastHardShapeIndex=i;p=[variedHardShapes[i]]}else p=base}else if(gameDifficulty==='medium'){const level=Math.min(currentLevel,6);let count=8+level;let base=MEDIUM_GAME_POOL.slice(0,Math.min(MEDIUM_GAME_POOL.length,count));if(level>=2)base=base.concat(LEVEL_SHAPES.slice(0,1));if(level>=3)base=base.concat(LEVEL_SHAPES.slice(1,2));if(level>=4)base=base.concat(MEDIUM_POOL.slice(4,6));if(level>=5)base=base.concat(LEVEL_SHAPES.slice(2,3));p=base}else{const level=Math.min(currentLevel,6);let base=VERY_EASY_POOL.slice();if(level>=2)base=base.concat(EASY_POOL.slice(1,6));if(level>=3)base=base.concat(EASY_POOL.slice(6));if(level>=4)base=base.concat(LEVEL_SHAPES.slice(0,2));if(level>=5)base=base.concat(LEVEL_SHAPES.slice(2,4));if(level>=6)base=base.concat(LEVEL_SHAPES.slice(4));p=base}return JSON.parse(JSON.stringify(p[Math.floor(Math.random()*p.length)]))}'''
+          path.write_text(text[:start]+new+text[end:],encoding='utf-8')
           PY
-
       - name: Commit fix
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "fix: add varied small shapes to hard mode"
-            git push
-          fi
+          if git diff --cached --quiet; then echo "No changes to commit"; else git commit -m "fix: make hard mode 40 percent varied shapes"; git push; fi
