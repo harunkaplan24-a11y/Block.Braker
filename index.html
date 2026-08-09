@@ -127,6 +127,7 @@ function checkGameOver(){if(lineClearPending)return;let pieces=currentPieces.fil
       document.querySelectorAll('.modal-overlay,.level-up-container').forEach(x=>x.classList.remove('active'));
       document.querySelectorAll('.modal-overlay').forEach(x=>{x.style.display='none';x.style.pointerEvents='none';});
       document.querySelectorAll('.action-buttons,.game-over-buttons,.continue-buttons').forEach(x=>{x.style.display='none';x.style.pointerEvents='none';});
+      startTimer();
       const cells=[...document.querySelectorAll('#grid .cell.filled')];
       for(const c of cells.sort(()=>Math.random()-.5).slice(0,20)){
         c.classList.add('exploding-cell');
@@ -143,7 +144,7 @@ function checkGameOver(){if(lineClearPending)return;let pieces=currentPieces.fil
         const dx=(Math.random()-.5)*innerWidth, dy=innerHeight*.45+Math.random()*innerHeight*.25;
         b.animate([{transform:'translate(0,0) rotate(0deg)',opacity:1},{transform:`translate(${dx}px,${dy}px) rotate(${360+Math.random()*360}deg)`,opacity:0}],{duration:850,easing:'cubic-bezier(.2,.7,.2,1)',fill:'forwards'}).finished.finally(()=>b.remove());
       };
-      for(let i=0;i<20;i++) setTimeout(()=>{monkey?.classList.remove('arms-throw'); void monkey?.offsetWidth; monkey?.classList.add('arms-throw'); throwBanana();},i*120);
+      for(let i=0;i<15;i++) setTimeout(()=>{monkey?.classList.remove('arms-throw'); void monkey?.offsetWidth; monkey?.classList.add('arms-throw'); throwBanana();},i*120);
     },true);
   };
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install,{once:true}); else install();
