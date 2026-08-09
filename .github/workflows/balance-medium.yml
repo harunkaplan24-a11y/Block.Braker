@@ -1,0 +1,46 @@
+name: Balance Medium Difficulty
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  balance-medium:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Make Medium meaningfully harder
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          new_pool = "const MEDIUM_GAME_POOL=[{shape:[[1,1,1,1]],color:'color-8'},{shape:[[1],[1],[1],[1]],color:'color-8'},{shape:[[1,1,1],[1,0,0]],color:'color-1'},{shape:[[1,1,1],[0,0,1]],color:'color-5'},{shape:[[1,1,1],[0,1,0]],color:'color-7'},{shape:[[1,1],[1,0],[1,0]],color:'color-2'},{shape:[[0,1,1],[1,1,0]],color:'color-4'},{shape:[[1,1,0],[0,1,1]],color:'color-6'},{shape:[[1,1,1,1,1]],color:'color-3'},{shape:[[1],[1],[1],[1],[1]],color:'color-3'},{shape:[[1,1],[0,1],[0,1]],color:'color-6'},{shape:[[1,0],[1,1],[0,1]],color:'color-7'},{shape:[[1,1,0],[1,1,1]],color:'color-2'},{shape:[[0,1,0],[1,1,1]],color:'color-8'}];"
+
+          s = re.sub(r"const MEDIUM_GAME_POOL=.*?;", new_pool, s, count=1, flags=re.S)
+
+          old = "if(gameDifficulty==='medium'){const level=Math.min(currentLevel,6);let base=MEDIUM_GAME_POOL.slice(0,Math.min(MEDIUM_GAME_POOL.length,7+level));if(level>=2)base=base.concat(LEVEL_SHAPES.slice(0,Math.min(2,level-1)));if(level>=3)base=base.concat(LEVEL_SHAPES.slice(0,Math.min(4,level)));if(level>=4)base=base.concat(MEDIUM_POOL.slice(4,6));if(level>=5)base=base.concat(MEDIUM_POOL.slice(6));p=base}"
+          new = "if(gameDifficulty==='medium'){const level=Math.min(currentLevel,6);let count=9+level*2;let base=MEDIUM_GAME_POOL.slice(0,Math.min(MEDIUM_GAME_POOL.length,count));if(level>=2)base=base.concat(LEVEL_SHAPES.slice(0,3));if(level>=3)base=base.concat(LEVEL_SHAPES.slice(2,5));if(level>=4)base=base.concat(MEDIUM_POOL.slice(4,8));if(level>=5)base=base.concat(LEVEL_SHAPES.slice(5));p=base}"
+          if old not in s:
+              raise SystemExit('Medium difficulty logic not found')
+          s = s.replace(old, new, 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Commit medium balance
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "Increase medium difficulty"
+          git push
