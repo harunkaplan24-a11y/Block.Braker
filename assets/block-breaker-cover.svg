@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0f172a"/><stop offset="1" stop-color="#1e293b"/></linearGradient>
+  <linearGradient id="title" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#38bdf8"/><stop offset="1" stop-color="#a855f7"/></linearGradient>
+  <filter id="glow"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<rect width="1200" height="630" rx="36" fill="url(#bg)"/>
+<circle cx="1030" cy="100" r="150" fill="#38bdf8" opacity=".08"/><circle cx="180" cy="560" r="190" fill="#a855f7" opacity=".08"/>
+<text x="600" y="105" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="72" font-weight="900" fill="url(#title)">BLOCK BREAKER</text>
+<text x="600" y="150" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="22" font-weight="600" fill="#94a3b8" letter-spacing="5">MAYMUNUN MUZLARI • BLOKLARI KIR</text>
+<g transform="translate(325 185)">
+  <rect width="550" height="330" rx="24" fill="#111c31" stroke="#334155" stroke-width="6"/>
+  <g opacity=".95">
+    <rect x="35" y="35" width="72" height="45" rx="8" fill="#e11d48"/><rect x="116" y="35" width="72" height="45" rx="8" fill="#2563eb"/><rect x="197" y="35" width="72" height="45" rx="8" fill="#059669"/><rect x="278" y="35" width="72" height="45" rx="8" fill="#d97706"/><rect x="359" y="35" width="72" height="45" rx="8" fill="#7c3aed"/>
+    <rect x="76" y="92" width="72" height="45" rx="8" fill="#db2777"/><rect x="157" y="92" width="72" height="45" rx="8" fill="#0891b2"/><rect x="238" y="92" width="72" height="45" rx="8" fill="#9333ea"/><rect x="319" y="92" width="72" height="45" rx="8" fill="#e11d48"/>
+    <rect x="35" y="149" width="72" height="45" rx="8" fill="#2563eb"/><rect x="116" y="149" width="72" height="45" rx="8" fill="#059669"/><rect x="197" y="149" width="72" height="45" rx="8" fill="#d97706"/><rect x="278" y="149" width="72" height="45" rx="8" fill="#7c3aed"/><rect x="359" y="149" width="72" height="45" rx="8" fill="#db2777"/>
+  </g>
+  <g transform="translate(215 198)" filter="url(#glow)">
+    <ellipse cx="60" cy="62" rx="42" ry="34" fill="#a0522d"/><circle cx="60" cy="38" r="35" fill="#a0522d"/><ellipse cx="60" cy="45" rx="22" ry="16" fill="#d2b48c"/>
+    <circle cx="49" cy="36" r="5"/><circle cx="71" cy="36" r="5"/><circle cx="60" cy="48" r="4" fill="#5c2c0c"/>
+    <path d="M25 58 Q-5 25 10 5" stroke="#8b4513" stroke-width="14" stroke-linecap="round" fill="none"/><path d="M95 58 Q130 38 118 12" stroke="#8b4513" stroke-width="14" stroke-linecap="round" fill="none"/>
+  </g>
+  <text x="275" y="305" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="800" fill="#facc15">🍌  BREAK THE BLOCKS!</text>
+</g>
+<g transform="translate(905 255) rotate(-18)"><text font-size="68" filter="url(#glow)">🍌</text></g>
+<g transform="translate(215 255) rotate(18)"><text font-size="60">💥</text></g>
+</svg>
