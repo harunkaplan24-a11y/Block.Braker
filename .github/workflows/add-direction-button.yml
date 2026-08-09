@@ -1,0 +1,54 @@
+name: Add direction change button
+
+on:
+  push:
+    paths:
+      - 'index.html'
+      - '.github/workflows/add-direction-button.yml'
+
+jobs:
+  patch-game:
+    if: ${{ !contains(github.event.head_commit.message, '[direction-button]') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch index.html
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          if 'id="rotate-btn"' not in s:
+              s = s.replace(
+                  '.action-buttons{display:flex;gap:8px;width:100%;justify-content:center;flex-wrap:nowrap}',
+                  '.action-buttons{display:flex;gap:8px;width:100%;justify-content:center;flex-wrap:nowrap}'
+                  '.action-buttons .reroll-btn{min-width:0;flex:1;max-width:220px;padding:10px 8px;font-size:13px;justify-content:center}'
+              )
+              s = s.replace(
+                  '<div class="action-buttons"><button id="reroll-btn" class="reroll-btn">🔄 Şekil Değiştir (500 🪙)</button></div>',
+                  '<div class="action-buttons"><button id="reroll-btn" class="reroll-btn">🔄 Şekil Değiştir (500 🪙)</button><button id="rotate-btn" class="reroll-btn" style="background:#2563eb">↻ Yön Değiştir (250 🪙)</button></div>'
+              )
+              s = s.replace(
+                  "const gridElement=document.getElementById('grid'),scoreElement=",
+                  "const gridElement=document.getElementById('grid'),rotateBtn=document.getElementById('rotate-btn'),scoreElement="
+              )
+              s = s.replace(
+                  'function updateCoinsDisplay(){coinsElement.textContent=`🪙 ${coins}`;rerollBtn.disabled=coins<500}',
+                  'function updateCoinsDisplay(){coinsElement.textContent=`🪙 ${coins}`;rerollBtn.disabled=coins<500;rotateBtn.disabled=coins<250}'
+              )
+              marker = "rerollBtn.addEventListener('click',()=>{if(coins>=500){coins-=500;updateCoinsDisplay();generateNewPieces();saveGameState()}});"
+              addition = r'''\nfunction rotateShape(shape){const rows=shape.length,cols=shape[0].length,out=Array.from({length:cols},()=>Array(rows).fill(0));for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)out[c][rows-1-r]=shape[r][c];return out}\nfunction rotateAllPieces(){let changed=false;for(let i=0;i<currentPieces.length;i++){if(currentPieces[i]){currentPieces[i].shape=rotateShape(currentPieces[i].shape);changed=true}}if(heldPiece){heldPiece.shape=rotateShape(heldPiece.shape);changed=true}if(changed){renderAllHolders();saveGameState()}}\nrotateBtn.addEventListener('click',()=>{if(coins>=250){coins-=250;rotateAllPieces();updateCoinsDisplay();saveGameState()}});'''
+              if marker not in s:
+                  raise SystemExit('Reroll listener marker not found')
+              s = s.replace(marker, marker + addition)
+              p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet || git commit -m 'Add direction change button [direction-button]'
+          git push
