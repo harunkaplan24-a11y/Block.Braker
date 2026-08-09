@@ -1,0 +1,53 @@
+name: Fix continue game resume
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '.github/workflows/**'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch resume behavior
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old="let currentPieces=[null,null,null],heldPiece=null,canHold=true,activeDrag=null,audioCtx=null,ambientTimer=null,lineClearPending=false,rotateSelectionMode=false;"
+          new=old+"let suppressGameOverCheck=false;"
+          if old not in s:
+              raise SystemExit('state marker not found')
+          s=s.replace(old,new,1)
+          old="function renderAllHolders(){pieceHolders.forEach((h,i)=>{renderPieceHolder(h,currentPieces[i]);if(currentPieces[i]){h.classList.remove('disabled');h.style.visibility='visible'}else h.classList.add('disabled')});renderPieceHolder(holdHolder,heldPiece);if(heldPiece)holdHolder.style.visibility='visible';checkGameOver()}"
+          new="function renderAllHolders(){pieceHolders.forEach((h,i)=>{renderPieceHolder(h,currentPieces[i]);if(currentPieces[i]){h.classList.remove('disabled');h.style.visibility='visible'}else h.classList.add('disabled')});renderPieceHolder(holdHolder,heldPiece);if(heldPiece)holdHolder.style.visibility='visible';if(!suppressGameOverCheck)checkGameOver()}"
+          if old not in s:
+              raise SystemExit('render marker not found')
+          s=s.replace(old,new,1)
+          old="function triggerBananaEffect(){\n  const cells=[];"
+          new="function triggerBananaEffect(maxBananas=10){\n  const cells=[];"
+          if old not in s:
+              raise SystemExit('banana function marker not found')
+          s=s.replace(old,new,1)
+          old="const bananaCount=Math.min(cells.length,10);while(cells.length&&targets.length<bananaCount){"
+          new="const bananaCount=Math.min(cells.length,maxBananas);while(cells.length&&targets.length<bananaCount){"
+          if old not in s:
+              raise SystemExit('banana count marker not found')
+          s=s.replace(old,new,1)
+          old="resumeGameBtn.addEventListener('click',()=>{if(coins<2000)return;gameOverModal.classList.remove('active');if(!loadGameState())return;coins-=2000;updateCoinsDisplay();isPaused=false;startTimer();saveGameState();triggerArmAnim('arms-throw',700);for(let i=0;i<20;i++)setTimeout(()=>triggerBananaEffect(),350+i*180);});"
+          new="resumeGameBtn.addEventListener('click',()=>{if(coins<2000)return;suppressGameOverCheck=true;gameOverModal.classList.remove('active');if(!loadGameState()){suppressGameOverCheck=false;return}coins-=2000;updateCoinsDisplay();isPaused=false;suppressGameOverCheck=false;startTimer();saveGameState();triggerArmAnim('arms-throw',700);for(let i=0;i<15;i++)setTimeout(()=>triggerBananaEffect(1),350+i*180);});"
+          if old not in s:
+              raise SystemExit('resume handler marker not found')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          rm .github/workflows/fix-resume.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html .github/workflows/fix-resume.yml
+          git commit -m 'Fix continue to resume game and throw 15 bananas'
+          git push
