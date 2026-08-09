@@ -1,0 +1,95 @@
+name: Apply game balance fix
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-game:
+    if: "!contains(github.event.head_commit.message, '[game-balance-fix]')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch index.html
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          marker = '// GAME_BALANCE_FIX_2026_08_09'
+          if marker in text:
+              print('Patch already present.')
+              raise SystemExit(0)
+
+          # Track whether the last hard-mode piece was large.
+          text = text.replace(
+              "let currentPieces=[null,null,null],heldPiece=null,canHold=true,activeDrag=null,audioCtx=null,ambientTimer=null,lineClearPending=false;",
+              "let currentPieces=[null,null,null],heldPiece=null,canHold=true,activeDrag=null,audioCtx=null,ambientTimer=null,lineClearPending=false,lastHardWasLarge=false;\nconst GAME_BALANCE_FIX_MARKER='// GAME_BALANCE_FIX_2026_08_09';"
+          )
+
+          # Backgrounding the app must stop music without opening the settings modal.
+          text = text.replace(
+              "window.addEventListener('pointerdown',initAudio,{once:false});document.addEventListener('visibilitychange',()=>{if(document.hidden&&!difficultyModal.classList.contains('active'))pauseGame()});",
+              "window.addEventListener('pointerdown',initAudio,{once:false});document.addEventListener('visibilitychange',()=>{if(document.hidden){if(audioCtx&&audioCtx.state==='running')audioCtx.suspend()}else if(musicEnabled&&audioCtx&&!isPaused){audioCtx.resume()}});"
+          )
+
+          # Replace piece selection with a softer hard-mode distribution:
+          # small/medium pieces are weighted higher, large pieces are rarer,
+          # and large pieces cannot appear consecutively.
+          pattern = r"function getRandomPiece\(\)\{.*?\}function renderPieceHolder"
+          replacement = r'''function pieceCellCount(piece){return piece.shape.reduce((sum,row)=>sum+row.filter(Boolean).length,0)}
+function getRandomPiece(){let p;if(gameDifficulty==='hard'){const level=Math.min(currentLevel,6);let base=HARD_POOL.slice(0,Math.min(HARD_POOL.length,7+level));if(level>=2)base=base.concat(HARD_POOL.slice(3,7));if(level>=3)base=base.concat(LEVEL_SHAPES.slice(0,2));if(level>=4)base=base.concat(HARD_POOL.slice(7));if(level>=5)base=base.concat(LEVEL_SHAPES.slice(2,5));if(level>=6)base=base.concat(LEVEL_SHAPES.slice(5));const smallMedium=base.filter(x=>pieceCellCount(x)<5);const large=base.filter(x=>pieceCellCount(x)>=5);if(lastHardWasLarge&&smallMedium.length){p=smallMedium[Math.floor(Math.random()*smallMedium.length)]}else{const weighted=[];smallMedium.forEach(x=>{weighted.push(x,x,x)});large.forEach(x=>weighted.push(x));p=weighted[Math.floor(Math.random()*weighted.length)]||smallMedium[0]||large[0]}lastHardWasLarge=pieceCellCount(p)>=5}else if(gameDifficulty==='medium'){const level=Math.min(currentLevel,6);let count=8+level;let base=MEDIUM_GAME_POOL.slice(0,Math.min(MEDIUM_GAME_POOL.length,count));if(level>=2)base=base.concat(LEVEL_SHAPES.slice(0,1));if(level>=3)base=base.concat(LEVEL_SHAPES.slice(1,2));if(level>=4)base=base.concat(MEDIUM_POOL.slice(4,6));if(level>=5)base=base.concat(LEVEL_SHAPES.slice(2,3));p=base[Math.floor(Math.random()*base.length)]}else{const level=Math.min(currentLevel,6);let base=VERY_EASY_POOL.slice();if(level>=2)base=base.concat(EASY_POOL.slice(1,6));if(level>=3)base=base.concat(EASY_POOL.slice(6));if(level>=4)base=base.concat(LEVEL_SHAPES.slice(0,2));if(level>=5)base=base.concat(LEVEL_SHAPES.slice(2,4));if(level>=6)base=base.concat(LEVEL_SHAPES.slice(4));p=base[Math.floor(Math.random()*base.length)]}return JSON.parse(JSON.stringify(p))}function renderPieceHolder'''
+          text, n = re.subn(pattern, replacement, text, count=1, flags=re.S)
+          if n != 1:
+              raise RuntimeError('Could not replace getRandomPiece')
+
+          # Exactly five bananas are thrown at each level transition.
+          text = text.replace(
+              "const bananaCount=Math.min(cells.length,5+Math.floor(Math.random()*2));",
+              "const bananaCount=5;"
+          )
+
+          # Bananas are level-based, not score-threshold based.
+          text = text.replace(
+              "if(Math.floor(score/3000)>lastBananaThreshold){lastBananaThreshold=Math.floor(score/3000);triggerBananaEffect()}handleLevelProgress();saveGameState()",
+              "handleLevelProgress();saveGameState()"
+          )
+          text = text.replace(
+              "if(nextLevel>currentLevel){currentLevel=nextLevel;updateDifficultyUI();if(gameDifficulty==='hard')shuffleHardBoard();generateNewPieces();",
+              "if(nextLevel>currentLevel){currentLevel=nextLevel;updateDifficultyUI();if(gameDifficulty==='hard')shuffleHardBoard();generateNewPieces();triggerBananaEffect();"
+          )
+
+          # Make the legal-move check explicit: an empty playable placement keeps the game alive.
+          old_check = "function checkGameOver(){if(lineClearPending)return;let pieces=currentPieces.filter(p=>p!==null);if(heldPiece)pieces.push(heldPiece);if(!pieces.length)return;let move=false;for(const p of pieces){for(let r=0;r<BOARD_SIZE;r++){for(let c=0;c<BOARD_SIZE;c++){if(canPlace(p.shape,r,c)){move=true;break}}if(move)break}if(move)break}if(!move){"
+          new_check = "function hasPlayableMove(pieces){for(const p of pieces){for(let r=0;r<BOARD_SIZE;r++){for(let c=0;c<BOARD_SIZE;c++){if(canPlace(p.shape,r,c))return true}}}return false}function checkGameOver(){if(lineClearPending)return;let pieces=currentPieces.filter(p=>p!==null);if(heldPiece)pieces.push(heldPiece);if(!pieces.length)return;const move=hasPlayableMove(pieces);if(!move){"
+          if old_check not in text:
+              raise RuntimeError('Could not replace game-over check')
+          text = text.replace(old_check,new_check,1)
+
+          # Reset hard-mode large-piece streak on a fresh game.
+          text = text.replace(
+              "currentLevel=1;scoreElement.textContent=0;",
+              "currentLevel=1;lastHardWasLarge=false;scoreElement.textContent=0;",
+              1
+          )
+
+          text = text.replace("</script>", "GAME_BALANCE_FIX_MARKER+'\\n'}</script>") if False else text
+          text += '\n<!-- GAME_BALANCE_FIX_2026_08_09 -->\n'
+          path.write_text(text, encoding='utf-8')
+
+      - name: Commit patched game
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Balance hard mode and make bananas level-based [game-balance-fix]"
+          git push
