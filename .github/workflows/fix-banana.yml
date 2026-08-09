@@ -1,0 +1,81 @@
+name: Fix banana animation and icon
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch index.html
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('assets/block-breaker-cover.svg">\n<link rel="icon" type="image/svg+xml" href="assets/block-breaker-cover.svg">', 'assets/monkey-banana-icon.svg?v=4">\n<link rel="icon" type="image/svg+xml" href="assets/monkey-banana-icon.svg?v=4">\n<link rel="apple-touch-icon" href="assets/monkey-banana-icon.svg?v=4">\n<link rel="manifest" href="manifest.webmanifest?v=4">')
+          s = s.replace('.flying-banana{position:fixed;font-size:44px;pointer-events:none;z-index:1500;filter:drop-shadow(0 8px 12px rgba(0,0,0,.6)) drop-shadow(0 0 8px rgba(250,204,21,.65));transform-origin:center;will-change:transform,opacity;transition:transform 1.8s cubic-bezier(.22,.61,.36,1),opacity .3s ease-in}', '.flying-banana{position:fixed;font-size:44px;pointer-events:none;z-index:1500;filter:drop-shadow(0 8px 12px rgba(0,0,0,.6)) drop-shadow(0 0 8px rgba(250,204,21,.65));transform-origin:center;will-change:transform,opacity;opacity:1}')
+          new_fn = r'''function triggerBananaEffect(){
+            const targets=[];
+            for(let r=0;r<BOARD_SIZE;r++)for(let c=0;c<BOARD_SIZE;c++){
+              if(grid[r][c]===1)targets.push({r,c});
+            }
+            if(targets.length===0)return;
+            for(let i=targets.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[targets[i],targets[j]]=[targets[j],targets[i]]}
+            const selected=targets.slice(0,Math.min(6,targets.length));
+            const hand=orangutanSvg.querySelector('.arm-right-group circle');
+            const o=hand?hand.getBoundingClientRect():orangutanSvg.getBoundingClientRect();
+            const sx=o.left+o.width/2,sy=o.top+o.height/2;
+            selected.forEach((target,i)=>{
+              setTimeout(()=>{
+                if(grid[target.r][target.c]!==1)return;
+                triggerArmAnim('arms-throw',700);
+                const cell=gridElement.querySelector(`.cell[data-row="${target.r}"][data-col="${target.c}"]`);
+                if(!cell||grid[target.r][target.c]!==1)return;
+                const q=cell.getBoundingClientRect(),tx=q.left+q.width/2,ty=q.top+q.height/2;
+                const b=document.createElement('div');b.className='flying-banana';b.textContent='🍌';
+                b.style.left=`${sx-22}px`;b.style.top=`${sy-22}px`;b.style.transform='translate(0,0) rotate(0deg) scale(1)';
+                document.body.appendChild(b);
+                const duration=2600,start=performance.now(),dx=tx-sx,dy=ty-sy;
+                function fly(now){
+                  const p=Math.min(1,(now-start)/duration),e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+                  b.style.transform=`translate(${dx*e}px,${dy*e}px) rotate(${720*p}deg) scale(${1+0.2*Math.sin(Math.PI*p)})`;
+                  if(p<1)requestAnimationFrame(fly);else{
+                    b.remove();
+                    if(grid[target.r][target.c]===1){
+                      grid[target.r][target.c]=0;gridColors[target.r][target.c]=null;
+                      updateCellVisual(target.r,target.c);createSparks(cell);playExplosionSound();addScore(50);saveGameState();
+                    }
+                  }
+                }
+                requestAnimationFrame(fly);
+              },i*420);
+            });
+          }'''
+          s = re.sub(r'function triggerBananaEffect\(\)\{.*?\n\}\nfunction setupDragAndDrop', new_fn+'\nfunction setupDragAndDrop', s, count=1, flags=re.S)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Write manifest
+        run: |
+          cat > manifest.webmanifest <<'EOF'
+          {
+            "name":"Block Breaker",
+            "short_name":"Block Breaker",
+            "start_url":"./",
+            "display":"standalone",
+            "background_color":"#0f172a",
+            "theme_color":"#0f172a",
+            "icons":[{"src":"assets/monkey-banana-icon.svg?v=4","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+          }
+          EOF
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html manifest.webmanifest
+          git diff --cached --quiet && exit 0
+          git commit -m "Fix banana flight targets and app icon"
+          git push
