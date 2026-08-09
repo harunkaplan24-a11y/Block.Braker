@@ -1,27 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 <defs>
-  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0f172a"/><stop offset="1" stop-color="#1e293b"/></linearGradient>
-  <linearGradient id="title" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#38bdf8"/><stop offset="1" stop-color="#a855f7"/></linearGradient>
-  <filter id="glow"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#172554"/><stop offset="1" stop-color="#7c2d12"/></linearGradient>
+<radialGradient id="glow"><stop stop-color="#fde68a" stop-opacity=".5"/><stop offset="1" stop-color="#fde68a" stop-opacity="0"/></radialGradient>
 </defs>
-<rect width="1200" height="630" rx="36" fill="url(#bg)"/>
-<circle cx="1030" cy="100" r="150" fill="#38bdf8" opacity=".08"/><circle cx="180" cy="560" r="190" fill="#a855f7" opacity=".08"/>
-<text x="600" y="105" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="72" font-weight="900" fill="url(#title)">BLOCK BREAKER</text>
-<text x="600" y="150" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="22" font-weight="600" fill="#94a3b8" letter-spacing="5">MAYMUNUN MUZLARI • BLOKLARI KIR</text>
-<g transform="translate(325 185)">
-  <rect width="550" height="330" rx="24" fill="#111c31" stroke="#334155" stroke-width="6"/>
-  <g opacity=".95">
-    <rect x="35" y="35" width="72" height="45" rx="8" fill="#e11d48"/><rect x="116" y="35" width="72" height="45" rx="8" fill="#2563eb"/><rect x="197" y="35" width="72" height="45" rx="8" fill="#059669"/><rect x="278" y="35" width="72" height="45" rx="8" fill="#d97706"/><rect x="359" y="35" width="72" height="45" rx="8" fill="#7c3aed"/>
-    <rect x="76" y="92" width="72" height="45" rx="8" fill="#db2777"/><rect x="157" y="92" width="72" height="45" rx="8" fill="#0891b2"/><rect x="238" y="92" width="72" height="45" rx="8" fill="#9333ea"/><rect x="319" y="92" width="72" height="45" rx="8" fill="#e11d48"/>
-    <rect x="35" y="149" width="72" height="45" rx="8" fill="#2563eb"/><rect x="116" y="149" width="72" height="45" rx="8" fill="#059669"/><rect x="197" y="149" width="72" height="45" rx="8" fill="#d97706"/><rect x="278" y="149" width="72" height="45" rx="8" fill="#7c3aed"/><rect x="359" y="149" width="72" height="45" rx="8" fill="#db2777"/>
-  </g>
-  <g transform="translate(215 198)" filter="url(#glow)">
-    <ellipse cx="60" cy="62" rx="42" ry="34" fill="#a0522d"/><circle cx="60" cy="38" r="35" fill="#a0522d"/><ellipse cx="60" cy="45" rx="22" ry="16" fill="#d2b48c"/>
-    <circle cx="49" cy="36" r="5"/><circle cx="71" cy="36" r="5"/><circle cx="60" cy="48" r="4" fill="#5c2c0c"/>
-    <path d="M25 58 Q-5 25 10 5" stroke="#8b4513" stroke-width="14" stroke-linecap="round" fill="none"/><path d="M95 58 Q130 38 118 12" stroke="#8b4513" stroke-width="14" stroke-linecap="round" fill="none"/>
-  </g>
-  <text x="275" y="305" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="800" fill="#facc15">🍌  BREAK THE BLOCKS!</text>
-</g>
-<g transform="translate(905 255) rotate(-18)"><text font-size="68" filter="url(#glow)">🍌</text></g>
-<g transform="translate(215 255) rotate(18)"><text font-size="60">💥</text></g>
+<rect width="512" height="512" rx="112" fill="url(#bg)"/>
+<circle cx="100" cy="100" r="120" fill="#38bdf8" opacity=".12"/><circle cx="410" cy="420" r="150" fill="#facc15" opacity=".1"/><circle cx="256" cy="270" r="190" fill="url(#glow)"/>
+<circle cx="126" cy="210" r="62" fill="#7c3f20"/><circle cx="386" cy="210" r="62" fill="#7c3f20"/><circle cx="126" cy="210" r="34" fill="#d2a679"/><circle cx="386" cy="210" r="34" fill="#d2a679"/>
+<circle cx="256" cy="230" r="128" fill="#9a542d"/><ellipse cx="256" cy="276" rx="88" ry="68" fill="#d2a679"/>
+<circle cx="214" cy="222" r="15" fill="#111827"/><circle cx="298" cy="222" r="15" fill="#111827"/><circle cx="209" cy="216" r="5" fill="#fff"/><circle cx="293" cy="216" r="5" fill="#fff"/>
+<ellipse cx="256" cy="265" rx="17" ry="11" fill="#5c2c0c"/><path d="M220 294 Q256 325 292 294" fill="none" stroke="#5c2c0c" stroke-width="10" stroke-linecap="round"/>
+<path d="M145 285 Q72 240 88 140" fill="none" stroke="#7c3f20" stroke-width="38" stroke-linecap="round"/><path d="M367 285 Q440 240 424 140" fill="none" stroke="#7c3f20" stroke-width="38" stroke-linecap="round"/>
+<g transform="translate(54 88) rotate(-18)"><path d="M12 22 Q72 76 124 22" fill="none" stroke="#facc15" stroke-width="25" stroke-linecap="round"/><path d="M18 18 Q72 65 118 18" fill="none" stroke="#fde68a" stroke-width="7" stroke-linecap="round"/><circle cx="12" cy="22" r="7" fill="#a16207"/><circle cx="124" cy="22" r="7" fill="#a16207"/></g>
+<g transform="translate(334 92) rotate(18)"><path d="M12 22 Q72 76 124 22" fill="none" stroke="#facc15" stroke-width="25" stroke-linecap="round"/><path d="M18 18 Q72 65 118 18" fill="none" stroke="#fde68a" stroke-width="7" stroke-linecap="round"/><circle cx="12" cy="22" r="7" fill="#a16207"/><circle cx="124" cy="22" r="7" fill="#a16207"/></g>
+<rect x="92" y="390" width="328" height="70" rx="35" fill="#0f172a" stroke="#38bdf8" stroke-width="5"/><text x="256" y="435" text-anchor="middle" font-family="Arial,sans-serif" font-size="31" font-weight="900" fill="#f8fafc">BLOCK BREAKER</text>
 </svg>
