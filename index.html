@@ -13,62 +13,56 @@ html,body{margin:0;width:100%;height:100%;background:#0f172a;color:#fff}#boot{po
 <script>
 (async()=>{
   const original='https://raw.githubusercontent.com/harunkaplan24-a11y/Block.Braker/a71ae283023a8bd37a1b9452d99bd46f7323e859/index.html';
-  const patch=`<style>.level-subtext{display:block!important;font-size:18px!important;color:#38bdf8!important}.level-up-text{white-space:nowrap}@media(max-width:420px){.level-up-text{font-size:42px}.level-subtext{font-size:16px!important}}</style><script>
-(function(){
-  function progressivePiece(){
-    const lv=Math.max(1,Number(currentLevel)||1), diff=gameDifficulty;
-    let pool=[];
-    const clone=x=>JSON.parse(JSON.stringify(x));
-    if(diff==='easy'){
-      pool=VERY_EASY_POOL.concat(lv>=2?EASY_POOL.slice(1,6):[],lv>=3?EASY_POOL.slice(6):[],lv>=4?LEVEL_SHAPES.slice(0,2):[],lv>=5?LEVEL_SHAPES.slice(2,4):[],lv>=6?LEVEL_SHAPES.slice(4):[]);
-      if(lv>=7) pool=pool.concat(MEDIUM_GAME_POOL.slice(7,10));
-      if(lv>=8) pool=pool.concat(MEDIUM_GAME_POOL.slice(10,14));
-      if(lv>=9) pool=pool.concat(MEDIUM_POOL.slice(0,4));
-      if(lv>=10) pool=pool.concat(MEDIUM_POOL.slice(4,8));
-      if(lv>=11) pool=pool.concat(HARD_POOL.slice(7,10));
-      if(lv>=12) pool=pool.concat(HARD_POOL.slice(10));
-    }else if(diff==='medium'){
-      pool=MEDIUM_GAME_POOL.slice(0,Math.min(MEDIUM_GAME_POOL.length,8+Math.min(lv-1,6)));
-      if(lv>=2) pool=pool.concat(LEVEL_SHAPES.slice(0,1));
-      if(lv>=3) pool=pool.concat(LEVEL_SHAPES.slice(1,2));
-      if(lv>=4) pool=pool.concat(MEDIUM_POOL.slice(4,6));
-      if(lv>=5) pool=pool.concat(LEVEL_SHAPES.slice(2,4));
-      if(lv>=6) pool=pool.concat(LEVEL_SHAPES.slice(4));
-      if(lv>=7) pool=pool.concat(MEDIUM_POOL.slice(0,4));
-      if(lv>=8) pool=pool.concat(HARD_POOL.slice(3,7));
-      if(lv>=9) pool=pool.concat(HARD_POOL.slice(7,10));
-      if(lv>=10) pool=pool.concat(HARD_POOL.slice(10));
-    }else{
-      return originalGetRandomPiece();
-    }
-    return clone(pool[Math.floor(Math.random()*pool.length)]);
-  }
-  const originalGetRandomPiece=getRandomPiece;
-  getRandomPiece=progressivePiece;
-  handleLevelProgress=function(){
-    const nextLevel=Math.floor(score/5000)+1;
-    if(nextLevel>currentLevel){
-      currentLevel=nextLevel;
-      updateDifficultyUI();
-      if(gameDifficulty==='hard')shuffleHardBoard();
-      generateNewPieces();
-      if(currentLevel===10){
-        triggerLevelUpAnimation('TEBRİKLER!','10. seviyeye ulaştın! Oyun devam ediyor.');
-        triggerArmAnim('arms-celebrate',1600);
-      }else{
-        const sub=gameDifficulty==='easy'?'Kolay → Zorluk arttı':gameDifficulty==='medium'?'Orta → Zorluk arttı':'Zor → Tahta ve parçalar değişti';
-        triggerLevelUpAnimation('LEVEL '+currentLevel,sub);
-      }
-      saveGameState();
-    }
-  };
-})();
-<\/script>`;
   try{
     const r=await fetch(original,{cache:'no-store'});
     if(!r.ok) throw new Error('original fetch failed');
     let html=await r.text();
-    html=html.replace('</body>',patch+'</body>');
+
+    const progressiveGetRandomPiece=`function getRandomPiece(){
+      let p=[];
+      const level=Math.max(1,Number(currentLevel)||1);
+      if(gameDifficulty==='hard'){
+        const hardCount=Math.min(HARD_POOL.length,7+Math.min(level-1,Math.max(0,HARD_POOL.length-7)));
+        p=HARD_POOL.slice(0,hardCount);
+        if(level>=2)p=p.concat(HARD_POOL.slice(3,Math.min(HARD_POOL.length,7+level)));
+        if(level>=3)p=p.concat(LEVEL_SHAPES.slice(0,Math.min(LEVEL_SHAPES.length,Math.floor(level/2))));
+        if(level>=5)p=p.concat(HARD_POOL.slice(7));
+      }else if(gameDifficulty==='medium'){
+        const count=Math.min(MEDIUM_GAME_POOL.length,8+Math.min(level-1,MEDIUM_GAME_POOL.length-8));
+        p=MEDIUM_GAME_POOL.slice(0,count);
+        if(level>=2)p=p.concat(LEVEL_SHAPES.slice(0,1));
+        if(level>=3)p=p.concat(LEVEL_SHAPES.slice(1,2));
+        if(level>=4)p=p.concat(MEDIUM_POOL.slice(4,6));
+        if(level>=5)p=p.concat(LEVEL_SHAPES.slice(2,4));
+        if(level>=6)p=p.concat(LEVEL_SHAPES.slice(4));
+        if(level>=7)p=p.concat(MEDIUM_POOL.slice(0,4));
+        if(level>=8)p=p.concat(HARD_POOL.slice(3,7));
+        if(level>=9)p=p.concat(HARD_POOL.slice(7,10));
+        if(level>=10)p=p.concat(HARD_POOL.slice(10));
+      }else{
+        p=VERY_EASY_POOL.slice();
+        if(level>=2)p=p.concat(EASY_POOL.slice(1,6));
+        if(level>=3)p=p.concat(EASY_POOL.slice(6));
+        if(level>=4)p=p.concat(LEVEL_SHAPES.slice(0,2));
+        if(level>=5)p=p.concat(LEVEL_SHAPES.slice(2,4));
+        if(level>=6)p=p.concat(LEVEL_SHAPES.slice(4));
+        if(level>=7)p=p.concat(MEDIUM_GAME_POOL.slice(7,10));
+        if(level>=8)p=p.concat(MEDIUM_GAME_POOL.slice(10,14));
+        if(level>=9)p=p.concat(MEDIUM_POOL.slice(0,4));
+        if(level>=10)p=p.concat(MEDIUM_POOL.slice(4,8));
+        if(level>=11)p=p.concat(HARD_POOL.slice(7,10));
+        if(level>=12)p=p.concat(HARD_POOL.slice(10));
+      }
+      if(!p.length)p=MEDIUM_GAME_POOL.slice(0,3);
+      return JSON.parse(JSON.stringify(p[Math.floor(Math.random()*p.length)]));
+    }`;
+
+    html=html.replace(/function getRandomPiece\(\)\{[\s\S]*?\}function renderPieceHolder/,progressiveGetRandomPiece+'function renderPieceHolder');
+
+    const levelProgress=`function handleLevelProgress(){const nextLevel=Math.floor(score/5000)+1;if(nextLevel>currentLevel){currentLevel=nextLevel;updateDifficultyUI();if(gameDifficulty==='hard')shuffleHardBoard();generateNewPieces();if(currentLevel===10){triggerLevelUpAnimation('TEBRİKLER!','10. seviyeye ulaştın! Oyun devam ediyor.');triggerArmAnim('arms-celebrate',1600)}else{const sub=gameDifficulty==='easy'?'Kolay → Zorluk arttı':gameDifficulty==='medium'?'Orta → Zorluk arttı':'Zor → Tahta ve parçalar değişti';triggerLevelUpAnimation('LEVEL '+currentLevel,sub)}saveGameState()}}`;
+    html=html.replace(/function handleLevelProgress\(\)\{[\s\S]*?\}function addScore/,levelProgress+'function addScore');
+
+    html=html.replace('</body>','<style>.level-subtext{display:block!important}.level-up-text{white-space:nowrap}@media(max-width:420px){.level-up-text{font-size:42px}.level-subtext{font-size:16px!important}}</style></body>');
     document.open();document.write(html);document.close();
   }catch(e){document.getElementById('boot').textContent='Oyun yüklenemedi. Lütfen internet bağlantını kontrol et.';console.error(e)}
 })();
