@@ -1,0 +1,64 @@
+name: Apply Block Breaker level progression
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-level-progression.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch level progression
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+
+          old = "const MEDIUM_GAME_POOL=["
+          insert = r'''const PROGRESSIVE_EASY_SHAPES=[
+{shape:[[1,1,1,1]],color:'color-8'},
+{shape:[[1],[1],[1],[1]],color:'color-8'},
+{shape:[[1,1,0],[0,1,1]],color:'color-6'},
+{shape:[[0,1,1],[1,1,0]],color:'color-7'},
+{shape:[[1,1,1],[0,1,0]],color:'color-5'},
+{shape:[[1,1],[1,0],[1,0]],color:'color-2'},
+{shape:[[1,1,1],[1,0,0]],color:'color-1'},
+{shape:[[1,1,1],[0,0,1]],color:'color-4'}];
+function applyProgressiveDifficulty(base){
+  if(gameDifficulty!=='easy'&&gameDifficulty!=='medium')return base;
+  const l=Math.max(1,currentLevel);
+  const source=gameDifficulty==='easy'?PROGRESSIVE_EASY_SHAPES:MEDIUM_POOL;
+  const extraCount=Math.min(source.length,Math.max(0,l-1));
+  for(let i=0;i<extraCount;i++)base.push(source[i]);
+  return base;
+}
+'''
+          if old not in s: raise SystemExit('pool marker not found')
+          if 'function applyProgressiveDifficulty' not in s:
+              s=s.replace(old,insert+old,1)
+
+          old2="}return JSON.parse(JSON.stringify(p[Math.floor(Math.random()*p.length)]))}function renderPieceHolder"
+          new2="}p=applyProgressiveDifficulty(p);return JSON.parse(JSON.stringify(p[Math.floor(Math.random()*p.length)]))}function renderPieceHolder"
+          if old2 not in s: raise SystemExit('getRandomPiece return marker not found')
+          s=s.replace(old2,new2,1)
+
+          old3="function handleLevelProgress(){const nextLevel=Math.floor(score/5000)+1;if(nextLevel>currentLevel){currentLevel=nextLevel;updateDifficultyUI();if(gameDifficulty==='hard')shuffleHardBoard();generateNewPieces();const sub=gameDifficulty==='easy'?'Kolay → Zorluk arttı':gameDifficulty==='medium'?'Orta → Zorluk arttı':'Zor → Tahta ve parçalar değişti';triggerLevelUpAnimation(`LEVEL ${currentLevel}`,sub);saveGameState()}}"
+          new3="function handleLevelProgress(){const nextLevel=Math.floor(score/5000)+1;if(nextLevel>currentLevel){currentLevel=nextLevel;updateDifficultyUI();if(gameDifficulty==='hard')shuffleHardBoard();generateNewPieces();if(currentLevel===10){triggerLevelUpAnimation('TEBRİKLER!','10. seviyeye ulaştın! Oyun devam ediyor.')}else{const sub=gameDifficulty==='easy'?`Kolay • Level ${currentLevel} — Biraz daha zor` : gameDifficulty==='medium'?`Orta • Level ${currentLevel} — Biraz daha zor`:'Zor → Tahta ve parçalar değişti';triggerLevelUpAnimation(`LEVEL ${currentLevel}`,sub)}saveGameState()}}"
+          if old3 not in s: raise SystemExit('level handler not found')
+          s=s.replace(old3,new3,1)
+
+          p.write_text(s,encoding='utf-8')
+          PY
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html .github/workflows/apply-level-progression.yml
+          git commit -m 'Increase easy and medium difficulty by level'
+          git push
+          git rm .github/workflows/apply-level-progression.yml
+          git commit -m 'Remove temporary level progression workflow'
+          git push
